@@ -1,7 +1,7 @@
 {
   "name": "JH Tech Blog",
   "short_name": "JH Blog",
-  "description": "付佳豪的个人技术博客 - 专注后端开发与分布式系统",
+  "description": "JH的个人技术博客 - 专注后端开发与分布式系统",
   "icons": [
     {
       "src": "icons/pwa_icon_128.png",

@@ -1,10 +1,10 @@
 # Site settings
 title: JiaHao's Blog
-SEOTitle: 付佳豪的技术博客 | JiaHao's Tech Blog
+SEOTitle: JH的技术博客 | JH's Tech Blog
 header-img: img/home-bg-geek.jpg
 email: fujiahao0805@gmail.com
 description: "探索技术的边界，记录成长的足迹 | Exploring technology boundaries, documenting growth journey"
-keyword: "JiaHao, 付佳豪, 技术博客, Golang, 计算机科学, 深圳大学"
+keyword: "JH, 技术博客, Golang, 计算机科学, 深圳大学"
 url: "http://fjh0805.github.io"          # your host, for absolute URL
 baseurl: ""      # for example, '/blog' if your blog hosted on 'host/blog'
 github_repo: "https://github.com/fjh0805/fjh0805.github.io.git" # you code repository
