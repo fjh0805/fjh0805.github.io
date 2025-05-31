@@ -263,21 +263,23 @@ a:hover {
         z-index: 1000;
     }
     
-    /* 确保移动端导航菜单可见性 */
+    /* 确保移动端导航菜单按钮可点击 */
+    .navbar-default .navbar-toggle {
+        z-index: 1001;
+        position: relative;
+        background-color: transparent;
+        border: 1px solid transparent;
+    }
+    
+    /* 简化移动端导航显示逻辑 */
     @media (max-width: 767px) {
-        #huxblog_navbar.in {
+        .navbar-collapse.in {
             display: block !important;
-            visibility: visible !important;
         }
         
-        #huxblog_navbar.in .navbar-collapse {
+        .navbar-toggle {
             display: block !important;
-            visibility: visible !important;
-            overflow: visible !important;
-        }
-        
-        .navbar-default .navbar-toggle {
-            z-index: 1001;
+            cursor: pointer;
         }
     }
 
