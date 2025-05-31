@@ -298,6 +298,35 @@ a:hover {
             padding: 10px 0;
         }
         
+        /* 修复移动端导航菜单文字颜色 */
+        #huxblog_navbar .nav li a {
+            color: #333 !important;
+            padding: 10px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            display: block;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        #huxblog_navbar .nav li:last-child a {
+            border-bottom: none;
+        }
+        
+        #huxblog_navbar .nav li a:hover {
+            color: #667eea !important;
+            background-color: #f8f9fa;
+            text-decoration: none;
+            transform: none;
+        }
+        
+        /* 确保移动端导航容器样式正确 */
+        .navbar-default .navbar-collapse {
+            background: #fff;
+            border: 1px solid #e7e7e7;
+            border-radius: 6px;
+            box-shadow: 0 6px 12px rgba(0,0,0,.175);
+        }
+        
         .navbar-toggle {
             margin-right: 15px;
             margin-top: 8px;
