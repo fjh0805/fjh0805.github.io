@@ -13,13 +13,17 @@
     <link rel="manifest" href="{{ site.baseurl }}/pwa/manifest.json">
 
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ site.baseurl }}/img/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="{{ site.baseurl }}/img/favicon.svg" type="image/svg+xml">
-    <!-- 兼容旧浏览器保留ico -->
-    <link rel="alternate icon" href="{{ site.baseurl }}/img/favicon.ico" type="image/x-icon">
-
-    <!-- Safari Webpage Icon    by-BY -->
-    <link rel="apple-touch-icon" href="{{ site.baseurl }}/img/apple-touch-icon.svg">
+    <link rel="icon" href="{{ site.baseurl }}/img/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ site.baseurl }}/img/favicon.ico" type="image/x-icon">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="{{ site.baseurl }}/img/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ site.baseurl }}/img/apple-touch-icon.png">
+    
+    <!-- 确保浏览器缓存更新 -->
+    <meta name="msapplication-TileImage" content="{{ site.baseurl }}/img/apple-touch-icon.png">
+    <meta name="msapplication-TileColor" content="#667eea">
 
     <!-- Canonical URL -->
     <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">

@@ -229,6 +229,34 @@ a:hover {
 
 /* 改善移动端显示 */
 @media (max-width: 768px) {
+    /* 修复移动端右角白色区域问题 */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        position: relative;
+    }
+    
+    .container-fluid, .container {
+        padding-left: 15px;
+        padding-right: 15px;
+        margin-left: auto;
+        margin-right: auto;
+        overflow-x: hidden;
+    }
+    
+    /* 确保所有内容都不会超出视口 */
+    .intro-header, .post-container, .sidebar-container {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    
+    /* 修复导航栏在移动端的显示 */
+    .navbar-default .navbar-collapse {
+        max-width: calc(100vw - 30px);
+        right: 15px;
+    }
+    
     .post-preview {
         padding: 20px;
         margin-bottom: 20px;
@@ -257,6 +285,20 @@ a:hover {
 
     .tag-text {
         font-size: 18px;
+    }
+    
+    /* 修复表格在移动端的显示 */
+    .table-responsive {
+        border: none;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* 确保pre标签内容不会溢出 */
+    pre {
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
     }
 }
 
