@@ -1,0 +1,621 @@
+/* Custom CSS for enhanced visual appeal */
+
+/* 改善代码块样式 */
+pre {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+pre code {
+    color: #fff;
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+/* 改善引用块样式 */
+blockquote {
+    border-left: 4px solid #667eea;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-style: italic;
+}
+
+blockquote p {
+    margin-bottom: 0;
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+/* 改善导航栏样式 */
+.navbar-custom {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.navbar-custom .navbar-brand,
+.navbar-custom .nav li a {
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.navbar-custom .nav li a:hover {
+    color: #c3cfe2;
+    transform: translateY(-2px);
+}
+
+.navbar-custom .navbar-brand {
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: 1px;
+}
+
+.navbar-custom .nav>li>a {
+    position: relative;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.navbar-custom .nav>li>a::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: #fff;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.navbar-custom .nav>li>a:hover::after {
+    width: 100%;
+}
+
+/* 改善卡片样式 */
+.post-preview {
+    background: #fff;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+}
+
+.post-preview:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+}
+
+.post-title {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.post-subtitle {
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+/* 改善侧边栏样式 */
+.sidebar-container {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 20px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-container .short-about img {
+    border-radius: 50%;
+    border: 4px solid #fff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.sidebar-container .short-about img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* 改善标签样式 */
+.tags a {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff !important;
+    border: none;
+    border-radius: 20px;
+    padding: 5px 15px;
+    margin: 3px;
+    display: inline-block;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tags a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* 导航栏增强样式 */
+.navbar-custom .navbar-brand {
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: 1px;
+}
+
+.navbar-custom .nav>li>a {
+    position: relative;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.navbar-custom .nav>li>a::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: #fff;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.navbar-custom .nav>li>a:hover::after {
+    width: 100%;
+}
+
+/* 改善按钮样式 */
+.btn {
+    border-radius: 25px;
+    padding: 10px 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* 改善链接样式 */
+a {
+    color: #667eea;
+    transition: all 0.3s ease;
+}
+
+a:hover {
+    color: #764ba2;
+    text-decoration: none;
+}
+
+/* 添加动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.post-preview {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* 改善移动端显示 */
+@media (max-width: 768px) {
+    .post-preview {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .sidebar-container {
+        margin-top: 30px;
+        padding: 20px;
+    }
+
+    #tag_cloud {
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    #tag_cloud a {
+        margin: 3px;
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    .listing-seperator {
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+
+    .tag-text {
+        font-size: 18px;
+    }
+}
+
+/* 改善代码高亮 */
+.highlight {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 改善表格样式 */
+table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+}
+
+table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+}
+
+table td {
+    border-color: #e9ecef;
+}
+
+/* About页面特殊样式 */
+.about-icons {
+    font-size: 1.2em;
+    margin-right: 8px;
+}
+
+.tech-stack {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+/* 添加渐变背景动画 */
+.intro-header {
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    position: relative;
+}
+
+.intro-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+    z-index: 1;
+}
+
+.intro-header .container {
+    position: relative;
+    z-index: 2;
+}
+
+/* 增强文章内容样式 */
+.post-container h2 {
+    color: #2c3e50;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+    margin-top: 40px;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.post-container h2::before {
+    content: "📌";
+    margin-right: 10px;
+}
+
+.post-container h3 {
+    color: #34495e;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    position: relative;
+    padding-left: 15px;
+}
+
+.post-container h3::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+}
+
+/* 改善代码块的样式 */
+.post-container pre {
+    position: relative;
+    margin: 25px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.post-container pre::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 代码语言标签 */
+.post-container pre[class*="language-"]::after {
+    content: attr(class);
+    position: absolute;
+    top: 5px;
+    right: 15px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+/* 行内代码样式 */
+.post-container code {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #e83e8c;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: 600;
+    border: 1px solid #dee2e6;
+}
+
+.post-container pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border: none;
+    font-weight: normal;
+}
+
+/* 列表样式改进 */
+.post-container ul,
+.post-container ol {
+    padding-left: 25px;
+    margin: 20px 0;
+}
+
+.post-container li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+.post-container ul li {
+    position: relative;
+}
+
+.post-container ul li::before {
+    content: "▸";
+    color: #667eea;
+    position: absolute;
+    left: -20px;
+    font-weight: bold;
+}
+
+/* 任务列表样式 */
+.post-container ul li input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+.post-container ul li input[type="checkbox"]:checked+span {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+/* 警告框样式 */
+.post-container .alert {
+    border-radius: 8px;
+    border: none;
+    padding: 20px;
+    margin: 25px 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    color: #0c5460;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    color: #856404;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+}
+
+/* 分隔线样式 */
+.post-container hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin: 40px 0;
+    border-radius: 1px;
+}
+
+/* 图片样式 */
+.post-container img {
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+    max-width: 100%;
+    height: auto;
+}
+
+/* 表格样式增强 */
+.post-container table {
+    margin: 25px 0;
+    border-collapse: collapse;
+    width: 100%;
+    background: #fff;
+}
+
+.post-container table th {
+    font-weight: 600;
+    text-align: left;
+    padding: 15px;
+}
+
+.post-container table td {
+    padding: 12px 15px;
+}
+
+.post-container table tr:nth-child(even) {
+    background: #f8f9fa;
+}
+
+/* Emoji 增强 */
+.post-container .emoji {
+    font-size: 1.2em;
+    margin: 0 2px;
+}
+
+/* 标签云增强样式 */
+#tag_cloud {
+    text-align: center;
+    margin: 40px 0;
+    padding: 30px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+}
+
+#tag_cloud a {
+    display: inline-block;
+    margin: 5px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff !important;
+    text-decoration: none;
+    border-radius: 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+    border: none;
+}
+
+#tag_cloud a:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* 标签列表样式 */
+.one-tag-list {
+    margin: 40px 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.listing-seperator {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff !important;
+    padding: 15px 25px;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    display: block;
+    border: none;
+}
+
+.tag-text {
+    margin-left: 10px;
+    font-size: 20px;
+}
+
+/* 文章预览卡片在标签页面的样式 */
+.one-tag-list .post-preview {
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    box-shadow: none;
+    padding: 25px;
+}
+
+.one-tag-list .post-preview:last-child {
+    border-bottom: none;
+}
+
+.one-tag-list .post-preview:hover {
+    background: #f8f9fa;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 分页器样式 */
+.pager li>a,
+.pager li>span {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 25px;
+    color: #fff;
+    padding: 12px 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pager li>a:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* 页脚样式增强 */
+.intro-header .page-heading h1 {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.intro-header .page-heading .subheading {
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    font-size: 20px;
+    margin-top: 20px;
+}
