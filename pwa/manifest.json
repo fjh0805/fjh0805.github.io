@@ -1,18 +1,21 @@
 {
-  "name": "BY Blog",
-  "short_name": "BY Blog",
-  "description": "A personal blog by engineer",
-  "icons": [{
-    "src": "icons/pwa_icon_128.png",
-    "sizes": "128x128",
-    "type": "image/png"
-  }, {
-    "src": "icons/pwa_icon_512.png",
-    "sizes": "512x512",
-    "type": "image/png"
-  }],
-  "background_color": "#fff",
-  "theme_color": "#000",
+  "name": "JH Tech Blog",
+  "short_name": "JH Blog",
+  "description": "付佳豪的个人技术博客 - 专注后端开发与分布式系统",
+  "icons": [
+    {
+      "src": "icons/pwa_icon_128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/pwa_icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "background_color": "#667eea",
+  "theme_color": "#764ba2",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait"
