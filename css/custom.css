@@ -269,17 +269,51 @@ a:hover {
         position: relative;
         background-color: transparent;
         border: 1px solid transparent;
+        cursor: pointer;
+        display: block;
     }
     
-    /* 简化移动端导航显示逻辑 */
+    /* 移动端导航菜单样式 */
     @media (max-width: 767px) {
-        .navbar-collapse.in {
+        #huxblog_navbar {
+            display: none;
+            opacity: 0;
+            transform: scaleX(0);
+            transform-origin: top right;
+            transition: all 0.3s ease;
+        }
+        
+        #huxblog_navbar.in {
             display: block !important;
+            opacity: 1 !important;
+            transform: scaleX(1) !important;
+        }
+        
+        .navbar-collapse {
+            border: none;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            background: #fff;
+            margin-top: 10px;
+            padding: 10px 0;
         }
         
         .navbar-toggle {
-            display: block !important;
-            cursor: pointer;
+            margin-right: 15px;
+            margin-top: 8px;
+            padding: 9px 10px;
+        }
+        
+        .navbar-toggle .icon-bar {
+            background-color: #fff;
+            height: 2px;
+            width: 22px;
+            border-radius: 1px;
+            display: block;
+        }
+        
+        .navbar-toggle .icon-bar + .icon-bar {
+            margin-top: 4px;
         }
     }
 
