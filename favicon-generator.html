@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Favicon Generator</title>
+</head>
+<body>
+    <canvas id="canvas" width="128" height="128"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 创建渐变
+        const gradient = ctx.createLinearGradient(0, 0, 128, 128);
+        gradient.addColorStop(0, '#667eea');
+        gradient.addColorStop(1, '#764ba2');
+        
+        // 绘制圆角矩形背景
+        ctx.fillStyle = gradient;
+        ctx.roundRect(0, 0, 128, 128, 32);
+        ctx.fill();
+        
+        // 绘制文字
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 64px Lora, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.letterSpacing = '2px';
+        ctx.fillText('JH', 64, 64);
+        
+        // 导出为PNG
+        const dataURL = canvas.toDataURL('image/png');
+        console.log('PNG Data URL:', dataURL);
+    </script>
+</body>
+</html>
