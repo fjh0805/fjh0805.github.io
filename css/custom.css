@@ -841,7 +841,8 @@ table td {
 }
 
 /* 文章内容区域文字增强 */
-.post-container, .post-content {
+.post-container,
+.post-content {
     color: #2c3e50;
     line-height: 1.7;
     font-size: 16px;
@@ -854,8 +855,8 @@ table td {
 }
 
 /* 分页器文字 */
-.pager li > a,
-.pager li > span {
+.pager li>a,
+.pager li>span {
     font-size: 14px;
     color: #fff !important;
 }

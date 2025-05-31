@@ -2,19 +2,23 @@
   "name": "JiaHao's Blog",
   "short_name": "JH Blog",
   "description": "探索技术的边界，记录成长的足迹",
-  "icons": [{
-    "src": "../img/favicon.svg",
-    "sizes": "128x128",
-    "type": "image/svg+xml"
-  }, {
-    "src": "icons/pwa_icon_128.png",
-    "sizes": "128x128",
-    "type": "image/png"
-  }, {
-    "src": "icons/pwa_icon_512.png",
-    "sizes": "512x512",
-    "type": "image/png"
-  }],
+  "icons": [
+    {
+      "src": "../img/favicon.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "icons/pwa_icon_128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/pwa_icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
   "background_color": "#667eea",
   "theme_color": "#667eea",
   "start_url": "/",
