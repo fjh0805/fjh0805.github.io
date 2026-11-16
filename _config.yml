@@ -40,16 +40,11 @@ highlighter: rouge
 kramdown:
   input: GFM
 
-gitalk:
-  enable: true
-  clientID: Ov23liV2njKJV1af52E2
-  clientSecret: 5c29bce719cdfe6ab3f1f49e81b99ab309b05f73
-  repo: fjh0805.github.io
-  owner: fjh0805
-  admin: fjh0805
-  distractionFreeMode: true
-  # 留空时仍用 Gitalk 1.8.0 自带的公共代理。不要在这里填写密钥。
-  proxy: ""
+comments:
+  repo: fjh0805/fjh0805.github.io
+  repo_id: R_kgDON9qC1w
+  category: Announcements
+  category_id: DIC_kwDON9qC184CnNW7
 
 featured-tags: true
 featured-condition-size: 1

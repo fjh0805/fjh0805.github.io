@@ -170,6 +170,12 @@ export function assertOwner(login, owner) {
     }
 }
 
+export function hasRepoWritePermission(repository) {
+    const permissions = repository && repository.permissions;
+    if (!permissions || typeof permissions !== "object") return false;
+    return permissions.push === true || permissions.maintain === true || permissions.admin === true;
+}
+
 export function utf8ToBase64(text) {
     const bytes = new TextEncoder().encode(String(text ?? ""));
     let binary = "";
