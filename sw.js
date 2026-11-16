@@ -1,4 +1,4 @@
-const CACHE = "jh-offline-v2";
+const CACHE = "jh-offline-v3";
 
 self.addEventListener("install", (event) => {
     event.waitUntil(

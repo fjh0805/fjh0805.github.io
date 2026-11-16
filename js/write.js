@@ -8,6 +8,7 @@ import {
     parseTagInput,
     hasRepoWritePermission,
     publishingConfigured,
+    writerGateMessage,
     renderMarkdown,
     replaceDraftImages,
     slugify,
@@ -18,6 +19,7 @@ import {
 const SESSION_KEY = "jh-write-session";
 const state = {
     config: null,
+    configLoaded: false,
     draftId: crypto.randomUUID(),
     existingPath: "",
     images: [],
@@ -409,7 +411,8 @@ function showLoggedOut() {
     document.querySelector("#login").hidden = !configured;
     document.querySelector("#logout").hidden = true;
     document.querySelector("#device").hidden = true;
-    document.querySelector("#who").textContent = configured ? "需要 GitHub 登录。" : "写作还不可用。";
+    document.querySelector("#who").textContent = writerGateMessage(state.config, state.configLoaded);
+    setStatus("");
 }
 
 async function verifyWriter(token) {
@@ -522,10 +525,15 @@ document.querySelector("#load-remote").addEventListener("click", () => {
 });
 
 fill({ date: new Date().toISOString().slice(0, 10) });
-fetch(new URL("../write/config.json", import.meta.url))
-    .then((response) => response.json())
+fetch("/write/config.json", { cache: "no-store" })
+    .then(async (response) => {
+        const type = response.headers.get("content-type") || "";
+        if (!response.ok || !type.includes("json")) throw new Error("config");
+        return response.json();
+    })
     .then(async (config) => {
         state.config = config;
+        state.configLoaded = true;
         if (!publishingConfigured(config)) {
             showLoggedOut();
             return;
@@ -545,6 +553,7 @@ fetch(new URL("../write/config.json", import.meta.url))
         }
     })
     .catch(() => {
+        state.config = null;
+        state.configLoaded = false;
         showLoggedOut();
-        setStatus("写作还不可用。");
     });
