@@ -154,6 +154,7 @@ a:hover {
     width: 100%;
     height: auto;
     border-radius: 0.9rem;
+    filter: sepia(0.18) saturate(1.18) contrast(1.08) brightness(1.02);
 }
 
 .eyebrow {
