@@ -1,8 +1,8 @@
 {% if site.gitalk.enable %}
 <section class="comments" aria-label="评论">
     <h2>评论</h2>
-    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
-    <script src="https://unpkg.com/gitalk@latest/dist/gitalk.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/gitalk@1.8.0/dist/gitalk.css">
+    <script src="https://unpkg.com/gitalk@1.8.0/dist/gitalk.min.js"></script>
     {% unless include.fixed_id %}
     <script src="{{ '/js/md5.min.js' | relative_url }}"></script>
     {% endunless %}
@@ -15,9 +15,14 @@
             owner: {{ site.gitalk.owner | jsonify }},
             admin: [{{ site.gitalk.admin | jsonify }}],
             distractionFreeMode: {{ site.gitalk.distractionFreeMode }},
+            {% assign gitalk_proxy = site.gitalk.proxy | default: "" | strip %}
+            {% if gitalk_proxy != "" %}
+            proxy: {{ gitalk_proxy | jsonify }},
+            {% endif %}
             id: {% if include.fixed_id %}{{ include.fixed_id | jsonify }}{% else %}md5(location.pathname){% endif %}
         });
         gitalk.render("gitalk-container");
     </script>
+    <script type="module" src="{{ '/js/gitalk-guard.js' | relative_url }}"></script>
 </section>
 {% endif %}
