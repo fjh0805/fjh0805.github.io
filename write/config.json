@@ -1,0 +1,11 @@
+---
+layout: null
+permalink: /write/config.json
+---
+{
+  "owner": {{ site.writer.owner | jsonify }},
+  "repo": {{ site.writer.repo | jsonify }},
+  "branch": {{ site.writer.branch | jsonify }},
+  "clientId": {{ site.writer.client_id | jsonify }},
+  "oauthProxy": {{ site.writer.oauth_proxy | jsonify }}
+}

@@ -1,7 +1,7 @@
 {
-  "name": "JH Tech Blog",
-  "short_name": "JH Blog",
-  "description": "JH的个人技术博客 - 专注后端开发与分布式系统",
+  "name": "JH的技术博客",
+  "short_name": "JH",
+  "description": "JH 的个人技术博客，记录后端、Golang 与学习笔记",
   "icons": [
     {
       "src": "icons/pwa_icon_128.png",
@@ -14,9 +14,8 @@
       "type": "image/png"
     }
   ],
-  "background_color": "#667eea",
-  "theme_color": "#764ba2",
+  "background_color": "#f6f3ec",
+  "theme_color": "#f6f3ec",
   "start_url": "/",
-  "display": "standalone",
-  "orientation": "portrait"
+  "display": "standalone"
 }

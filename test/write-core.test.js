@@ -1,0 +1,142 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+    assertOwner,
+    base64ToUtf8,
+    buildContentsRequest,
+    buildPostDocument,
+    escapeHtml,
+    imagePath,
+    isPublishablePath,
+    parsePostDocument,
+    parseTagInput,
+    postPath,
+    publishingConfigured,
+    renderMarkdown,
+    replaceDraftImages,
+    slugify,
+    utf8ToBase64
+} from "../js/write-core.js";
+
+test("slug and post path stay inside _posts", () => {
+    assert.equal(slugify("Escape Analysis!"), "escape-analysis");
+    assert.equal(slugify("逃逸分析"), "");
+    assert.equal(postPath("2026-11-16", "escape-analysis"), "_posts/2026-11-16-escape-analysis.md");
+    assert.throws(() => postPath("2026/11/16", "ok"));
+    assert.throws(() => postPath("2026-11-16", "../secret"));
+});
+
+test("image paths cannot leave the post folder", () => {
+    assert.equal(imagePath("escape-analysis", "Photo 1.PNG"), "img/posts/escape-analysis/photo-1.png");
+    assert.equal(isPublishablePath("img/posts/escape-analysis/photo-1.png"), true);
+    assert.equal(isPublishablePath("img/posts/escape-analysis/../../_config.yml"), false);
+    assert.equal(isPublishablePath("_posts/2025-03-10-逃逸分析.md"), true);
+    assert.equal(isPublishablePath("_posts/../_config.yml"), false);
+});
+
+test("front matter round trip keeps the body and quotes", () => {
+    const doc = buildPostDocument({
+        title: '日志 "优化"',
+        subtitle: "讨论",
+        date: "2026-11-16",
+        slug: "log-note",
+        author: "JH",
+        tags: parseTagInput("分布式，日志"),
+        body: "第一段\n\n第二段"
+    });
+    const parsed = parsePostDocument(doc.markdown);
+    assert.equal(parsed.title, '日志 "优化"');
+    assert.equal(parsed.subtitle, "讨论");
+    assert.deepEqual(parsed.tags, ["分布式", "日志"]);
+    assert.equal(parsed.body, "第一段\n\n第二段\n");
+    assert.equal(doc.path, "_posts/2026-11-16-log-note.md");
+});
+
+test("existing chinese filenames can be overwritten but not escaped", () => {
+    const doc = buildPostDocument({
+        title: "深入理解Golang逃逸分析",
+        date: "2025-03-10",
+        author: "JH",
+        tags: ["Golang"],
+        body: "正文",
+        existingPath: "_posts/2025-03-10-逃逸分析.md"
+    });
+    assert.equal(doc.path, "_posts/2025-03-10-逃逸分析.md");
+    assert.throws(() => buildPostDocument({
+        title: "坏路径",
+        date: "2025-03-10",
+        body: "正文",
+        existingPath: "_posts/../../README.md"
+    }));
+});
+
+test("draft images must be replaced with site paths", () => {
+    assert.equal(
+        replaceDraftImages("看 ![图](draft:abc123)", { abc123: "/img/posts/note/a.jpg" }),
+        "看 ![图](/img/posts/note/a.jpg)"
+    );
+    assert.throws(() => replaceDraftImages("![图](draft:abc123)", {}));
+    assert.throws(() => buildPostDocument({
+        title: "有图",
+        date: "2026-11-16",
+        slug: "with-image",
+        body: "![图](draft:abc123)"
+    }));
+});
+
+test("publish config and owner check reject anonymous writes", () => {
+    assert.equal(publishingConfigured({
+        owner: "fjh0805",
+        repo: "fjh0805.github.io",
+        branch: "master",
+        clientId: "",
+        oauthProxy: ""
+    }), false);
+    assert.equal(publishingConfigured({
+        owner: "fjh0805",
+        repo: "fjh0805.github.io",
+        branch: "master",
+        clientId: "Iv23liExampleClient",
+        oauthProxy: "https://oauth.example.workers.dev"
+    }), true);
+    assert.equal(publishingConfigured({
+        owner: "fjh0805",
+        repo: "fjh0805.github.io",
+        branch: "master",
+        clientId: "Iv23liExampleClient",
+        oauthProxy: "http://oauth.example.workers.dev"
+    }), false);
+    assert.throws(() => assertOwner("someone", "fjh0805"));
+    assert.doesNotThrow(() => assertOwner("FJH0805", "fjh0805"));
+});
+
+test("contents request carries the branch and optional sha", () => {
+    assert.deepEqual(buildContentsRequest({
+        message: "发布：标题",
+        contentBase64: "YQ==",
+        sha: "abc",
+        branch: "master"
+    }), {
+        message: "发布：标题",
+        content: "YQ==",
+        branch: "master",
+        sha: "abc"
+    });
+});
+
+test("markdown preview escapes html and keeps safe links", () => {
+    const html = renderMarkdown("你好 <script>alert(1)</script>\n\n[站内](/about/) [坏](javascript:alert(1))\n\n`code`");
+    assert.equal(html.includes("<script>"), false);
+    assert.match(html, /&lt;script&gt;/);
+    assert.match(html, /href="\/about\/"/);
+    assert.equal(html.includes("javascript:"), false);
+    assert.match(html, /<code>code<\/code>/);
+});
+
+test("utf-8 base64 round trip", () => {
+    assert.equal(base64ToUtf8(utf8ToBase64("中文\n笔记")), "中文\n笔记");
+});
+
+test("escape helper is stable", () => {
+    assert.equal(escapeHtml(`<>"'&`), "&lt;&gt;&quot;&#39;&amp;");
+});
