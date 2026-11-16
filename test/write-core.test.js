@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
     assertOwner,
+    hasRepoWritePermission,
     base64ToUtf8,
     buildContentsRequest,
     buildPostDocument,
@@ -108,6 +109,14 @@ test("publish config and owner check reject anonymous writes", () => {
     }), false);
     assert.throws(() => assertOwner("someone", "fjh0805"));
     assert.doesNotThrow(() => assertOwner("FJH0805", "fjh0805"));
+});
+
+test("repo write access comes from GitHub permissions, not a typed name", () => {
+    assert.equal(hasRepoWritePermission({ permissions: { push: true, pull: true } }), true);
+    assert.equal(hasRepoWritePermission({ permissions: { admin: true } }), true);
+    assert.equal(hasRepoWritePermission({ permissions: { pull: true } }), false);
+    assert.equal(hasRepoWritePermission({ full_name: "fjh0805/fjh0805.github.io" }), false);
+    assert.equal(hasRepoWritePermission(null), false);
 });
 
 test("contents request carries the branch and optional sha", () => {

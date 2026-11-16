@@ -1,5 +1,4 @@
 import {
-    assertOwner,
     base64ToUtf8,
     buildContentsRequest,
     buildPostDocument,
@@ -7,6 +6,7 @@ import {
     isPublishablePath,
     parsePostDocument,
     parseTagInput,
+    hasRepoWritePermission,
     publishingConfigured,
     renderMarkdown,
     replaceDraftImages,
@@ -303,16 +303,16 @@ async function blobToBase64(blob) {
 
 async function publish() {
     if (!publishingConfigured(state.config)) {
-        setStatus("发布还需要一次性配置。草稿可以继续留在手机上，或先下载 Markdown。");
-        document.querySelector("#setup").open = true;
+        setStatus("写作还不可用。");
         return;
     }
-    const session = readSession();
-    if (!session?.token) {
-        setStatus("请先用 GitHub 登录。");
+    const currentSession = readSession();
+    if (!currentSession?.token) {
+        showLoggedOut();
         return;
     }
-    assertOwner(session.login, state.config.owner);
+    const session = await verifyWriter(currentSession.token);
+    writeSession(session);
     const current = fields();
     const slug = state.existingPath ? splitPostPath(state.existingPath)?.slug : slugify(current.slug);
     if (state.images.length && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug || "")) {
@@ -389,18 +389,50 @@ async function openRemote(path) {
     setStatus("已载入线上文章。发布时会覆盖原文件，网址不变。");
 }
 
-function renderAuth() {
-    const session = readSession();
-    const login = document.querySelector("#login");
-    const logout = document.querySelector("#logout");
-    const code = document.querySelector("#device");
-    const who = document.querySelector("#who");
+function lockStudio() {
+    const studio = document.querySelector("#studio");
+    studio.hidden = true;
+    document.querySelector("#remote-list").replaceChildren();
+    document.querySelector("#draft-list").replaceChildren();
+    document.querySelector("#preview").hidden = true;
+    document.querySelector("#preview").replaceChildren();
+    state.draftId = crypto.randomUUID();
+    state.existingPath = "";
+    state.images = [];
+    state.remoteUrls = {};
+    if (document.querySelector("#post-title")) fill({ date: new Date().toISOString().slice(0, 10) });
+}
+
+function showLoggedOut() {
     const configured = publishingConfigured(state.config);
-    document.querySelector("#publish").disabled = !configured;
-    login.hidden = !configured || Boolean(session);
-    logout.hidden = !session;
-    code.hidden = true;
-    who.textContent = session ? `已登录 ${session.login}` : (configured ? "尚未登录" : "发布尚未配置，草稿和下载可以先用");
+    lockStudio();
+    document.querySelector("#login").hidden = !configured;
+    document.querySelector("#logout").hidden = true;
+    document.querySelector("#device").hidden = true;
+    document.querySelector("#who").textContent = configured ? "需要 GitHub 登录。" : "写作还不可用。";
+}
+
+async function verifyWriter(token) {
+    const headers = githubHeaders(token);
+    const response = await fetch(`https://api.github.com/repos/${encodeURIComponent(state.config.owner)}/${encodeURIComponent(state.config.repo)}`, { headers });
+    if (response.status === 401) throw new Error("登录已失效，请重新登录");
+    if (!response.ok) throw new Error("没有读到仓库权限");
+    const repository = await response.json();
+    if (!hasRepoWritePermission(repository)) throw new Error("这个 GitHub 账号没有写入权限");
+    const userResponse = await fetch("https://api.github.com/user", { headers });
+    const user = userResponse.ok ? await userResponse.json() : {};
+    return { token, login: user.login || "" };
+}
+
+async function enterStudio(session) {
+    document.querySelector("#studio").hidden = false;
+    document.querySelector("#login").hidden = true;
+    document.querySelector("#logout").hidden = false;
+    document.querySelector("#device").hidden = true;
+    document.querySelector("#who").textContent = session.login ? `已登录 ${session.login}` : "已登录";
+    setStatus("");
+    const drafts = await renderDrafts();
+    if (drafts[0]) loadDraft(drafts[0]);
 }
 
 async function startLogin() {
@@ -433,12 +465,9 @@ async function startLogin() {
         });
         const token = await tokenResponse.json();
         if (token.access_token) {
-            const userResponse = await fetch("https://api.github.com/user", { headers: githubHeaders(token.access_token) });
-            if (!userResponse.ok) throw new Error("没有读到 GitHub 账号");
-            const user = await userResponse.json();
-            assertOwner(user.login, state.config.owner);
-            writeSession({ token: token.access_token, login: user.login });
-            renderAuth();
+            const session = await verifyWriter(token.access_token);
+            writeSession(session);
+            await enterStudio(session);
             setStatus("登录完成。令牌只留在这个标签页。");
             return;
         }
@@ -481,7 +510,7 @@ document.querySelector("#login").addEventListener("click", () => {
 });
 document.querySelector("#logout").addEventListener("click", () => {
     writeSession(null);
-    renderAuth();
+    showLoggedOut();
     setStatus("已退出。");
 });
 document.querySelector("#image-input").addEventListener("change", (event) => {
@@ -495,16 +524,27 @@ document.querySelector("#load-remote").addEventListener("click", () => {
 fill({ date: new Date().toISOString().slice(0, 10) });
 fetch(new URL("../write/config.json", import.meta.url))
     .then((response) => response.json())
-    .then((config) => {
+    .then(async (config) => {
         state.config = config;
-        const setup = document.querySelector("#setup");
-        setup.open = !publishingConfigured(config);
-        renderAuth();
+        if (!publishingConfigured(config)) {
+            showLoggedOut();
+            return;
+        }
+        const existing = readSession();
+        if (!existing?.token) {
+            showLoggedOut();
+            return;
+        }
+        try {
+            const session = await verifyWriter(existing.token);
+            writeSession(session);
+            await enterStudio(session);
+        } catch {
+            writeSession(null);
+            showLoggedOut();
+        }
     })
-    .catch(() => setStatus("没有读到写作配置。"));
-
-renderDrafts()
-    .then((drafts) => {
-        if (drafts[0]) loadDraft(drafts[0]);
-    })
-    .catch(() => setStatus("这台浏览器没有打开本地草稿存储。"));
+    .catch(() => {
+        showLoggedOut();
+        setStatus("写作还不可用。");
+    });

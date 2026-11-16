@@ -1,78 +1,67 @@
 ---
 layout: default
 title: 写作
-description: "在手机上写笔记、保存草稿。发布需要 GitHub 登录。"
+description: "登录后写笔记。"
 permalink: /write/
 ---
 <div class="page write-page">
     <header class="page-head">
         <h1>写作</h1>
-        <p class="write-lead">草稿和图片先留在这台手机里。发布会写成仓库里的一篇 Markdown，只有站长自己的 GitHub 账号可以写入。站点页面里没有访问令牌。</p>
-        <p id="who" class="help">正在读取配置。</p>
+        <p id="who" class="write-lead">正在确认。</p>
     </header>
 
-    <details id="setup" class="setup" open>
-        <summary>发布前需要完成的一次性设置</summary>
-        <ol>
-            <li>打开 GitHub → Settings → Developer settings → OAuth Apps，新建一个 OAuth App。Homepage URL 填 <code>https://fjh0805.github.io</code>。Callback URL 可以填同一个地址，设备码流程不会用到它。</li>
-            <li>在这个 OAuth App 里勾选 Enable Device Flow。复制 Client ID。不要把 Client Secret 写进网页、脚本或仓库。</li>
-            <li>用 Cloudflare 部署仓库里的 <code>writer/oauth-proxy</code>。它只转发 GitHub 的两个设备码地址，并加上浏览器需要的 CORS 头，自己不保存密钥。</li>
-            <li>把 Worker 的 <code>ALLOWED_ORIGINS</code> 设为 <code>https://fjh0805.github.io</code>。</li>
-            <li>把 Client ID 和 Worker 的 https 地址填进 <code>_config.yml</code> 的 <code>writer.client_id</code>、<code>writer.oauth_proxy</code>，提交到 <code>master</code> 等 Pages 重新构建。</li>
-            <li>回到这个页面，用 GitHub 登录并在 <a href="https://github.com/login/device">github.com/login/device</a> 输入验证码。只有账号 <code>fjh0805</code> 能发布。</li>
-        </ol>
-        <p class="help">登录使用的 scope 是 <code>repo</code>，因为 GitHub 写入文件的接口要求它。令牌只放在当前标签页，关掉就消失。可以在 GitHub → Settings → Applications 里随时撤销。</p>
-    </details>
-
+    <div class="write-actions" id="gate">
+        <button type="button" id="login" hidden>用 GitHub 登录</button>
+        <button type="button" id="logout" hidden>退出</button>
+    </div>
     <div id="device" hidden>
         <p class="user-code" id="user-code"></p>
-        <p><a id="verify-link" href="https://github.com/login/device" rel="noopener noreferrer">打开 GitHub 输入验证码</a></p>
-    </div>
-
-    <div class="write-actions">
-        <button type="button" id="login">用 GitHub 登录</button>
-        <button type="button" id="logout" hidden>退出</button>
-        <button type="button" id="load-remote">读取已发布</button>
-    </div>
-    <ul id="remote-list" class="remote-list"></ul>
-
-    <form id="editor">
-        <label class="field">标题
-            <input id="post-title" name="title" autocomplete="off" required>
-        </label>
-        <label class="field">副标题
-            <input id="post-subtitle" name="subtitle" autocomplete="off">
-        </label>
-        <label class="field">日期
-            <input id="post-date" name="date" type="date" required>
-        </label>
-        <label class="field">标签
-            <input id="post-tags" name="tags" autocomplete="off" placeholder="用逗号分开">
-        </label>
-        <label class="field">英文文件名
-            <input id="post-slug" name="slug" autocomplete="off" placeholder="escape-analysis" inputmode="url" autocapitalize="none" spellcheck="false">
-        </label>
-        <p id="slug-preview" class="help"></p>
-        <label class="field">正文
-            <textarea id="post-body" name="body" required></textarea>
-        </label>
-        <label class="field">图片
-            <input id="image-input" type="file" accept="image/*" multiple>
-        </label>
-        <ul id="image-list" class="image-list"></ul>
-    </form>
-
-    <div class="write-actions">
-        <button type="button" id="new-draft">新草稿</button>
-        <button type="button" id="preview-toggle">预览</button>
-        <button type="button" id="download">下载 Markdown</button>
-        <button type="button" id="publish" class="primary" disabled>发布</button>
+        <p><a id="verify-link" href="https://github.com/login/device" rel="noopener noreferrer">在 GitHub 输入验证码</a></p>
     </div>
     <p id="status" class="status" role="status" aria-live="polite"></p>
 
-    <h2>本机草稿</h2>
-    <ul id="draft-list" class="draft-list"></ul>
+    <div id="studio" hidden>
+        <div class="write-actions">
+            <button type="button" id="load-remote">读取已发布</button>
+        </div>
+        <ul id="remote-list" class="remote-list"></ul>
 
-    <article id="preview" class="preview prose" hidden></article>
+        <form id="editor">
+            <label class="field">标题
+                <input id="post-title" name="title" autocomplete="off" required>
+            </label>
+            <label class="field">副标题
+                <input id="post-subtitle" name="subtitle" autocomplete="off">
+            </label>
+            <label class="field">日期
+                <input id="post-date" name="date" type="date" required>
+            </label>
+            <label class="field">标签
+                <input id="post-tags" name="tags" autocomplete="off" placeholder="用逗号分开">
+            </label>
+            <label class="field">英文文件名
+                <input id="post-slug" name="slug" autocomplete="off" placeholder="escape-analysis" inputmode="url" autocapitalize="none" spellcheck="false">
+            </label>
+            <p id="slug-preview" class="help"></p>
+            <label class="field">正文
+                <textarea id="post-body" name="body"></textarea>
+            </label>
+            <label class="field">图片
+                <input id="image-input" type="file" accept="image/*" multiple>
+            </label>
+            <ul id="image-list" class="image-list"></ul>
+        </form>
+
+        <div class="write-actions">
+            <button type="button" id="new-draft">新草稿</button>
+            <button type="button" id="preview-toggle">预览</button>
+            <button type="button" id="download">下载 Markdown</button>
+            <button type="button" id="publish" class="primary">发布</button>
+        </div>
+
+        <h2>本机草稿</h2>
+        <ul id="draft-list" class="draft-list"></ul>
+        <article id="preview" class="preview prose" hidden></article>
+    </div>
 </div>
 <script type="module" src="{{ '/js/write.js' | relative_url }}"></script>
