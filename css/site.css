@@ -154,7 +154,6 @@ a:hover {
     width: 100%;
     height: auto;
     border-radius: 0.9rem;
-    filter: grayscale(1) contrast(1.06) brightness(1.03);
 }
 
 .eyebrow {
