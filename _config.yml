@@ -48,6 +48,8 @@ gitalk:
   owner: fjh0805
   admin: fjh0805
   distractionFreeMode: true
+  # 留空时仍用 Gitalk 1.8.0 自带的公共代理。不要在这里填写密钥。
+  proxy: ""
 
 featured-tags: true
 featured-condition-size: 1

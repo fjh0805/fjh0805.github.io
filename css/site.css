@@ -557,6 +557,31 @@ h2 {
     margin-top: 3rem;
 }
 
+#gitalk-container[data-stuck] .gt-initing {
+    display: none;
+}
+
+.gitalk-guard {
+    max-width: 36rem;
+    margin: 1rem auto 0;
+    color: var(--ink-soft);
+}
+
+.gitalk-guard p {
+    margin: 0 0 0.8rem;
+}
+
+.gitalk-guard button {
+    font: inherit;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    min-height: 2.75rem;
+    padding: 0.4rem 0.95rem;
+    cursor: pointer;
+}
+
 .site-footer {
     border-top: 1px solid var(--line);
     padding: 1.4rem 0 2rem;
