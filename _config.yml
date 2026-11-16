@@ -1,118 +1,71 @@
-# Site settings
-title: JiaHao's Blog
+title: JH
 SEOTitle: JH的技术博客 | JH's Tech Blog
-header-img: img/home-bg-geek.jpg
 email: fujiahao0805@gmail.com
 description: "探索技术的边界，记录成长的足迹 | Exploring technology boundaries, documenting growth journey"
 keyword: "JH, 技术博客, Golang, 计算机科学, 深圳大学"
-url: "http://fjh0805.github.io"          # your host, for absolute URL
-baseurl: ""      # for example, '/blog' if your blog hosted on 'host/blog'
-github_repo: "https://github.com/fjh0805/fjh0805.github.io.git" # you code repository
+url: "https://fjh0805.github.io"
+baseurl: ""
+github_repo: "https://github.com/fjh0805/fjh0805.github.io"
+github_username: fjh0805
 
-# Sidebar settings
-sidebar: true                           # whether or not using Sidebar.
 sidebar-about-description: "永远年轻，永远热泪盈眶 | Stay hungry, stay foolish"
-sidebar-avatar: /img/my-photo.jpg      # use absolute URL, seeing it's used in both `/` and `/about/`
+sidebar-avatar: /img/my-photo.jpg
 
-
-
-# SNS settings
 RSS: false
-# weibo_username:     qiubaiying
-# zhihu_username:     jamsoul
-github_username:    fjh0805
-# facebook_username:  baiying.qiu.7
-# jianshu_username:   e71990ada2fd
-#twitter_username:   qiubaiying
 
-
-
-
-# Build settings
-# from 2016, 'pygments' is unsupported on GitHub Pages. Use 'rouge' for highlighting instead.
 permalink: pretty
 paginate: 10
-exclude: ["less","node_modules","Gruntfile.js","package.json","README.md"]
-anchorjs: true                          # if you want to customize anchor. check out line:181 of `post.html`
+exclude:
+  - less
+  - node_modules
+  - Gruntfile.js
+  - package.json
+  - package-lock.json
+  - README.md
+  - writer
+  - test
+  - docs
+  - vendor
+  - Gemfile
+  - Gemfile.lock
+  - codecov.yml
+  - favicon-generator.html
+  - .travis.yml
 
+plugins:
+  - jekyll-paginate
 
-
-# Gems
-# from PR#40, to support local preview for Jekyll 3.0
-gems: [jekyll-paginate]
-
-
-
-
-# Markdown settings
-# replace redcarpet to kramdown,
-# although redcarpet can auto highlight code, the lack of header-id make the catalog impossible, so I switch to kramdown
-# document: http://jekyllrb.com/docs/configuration/#kramdown
 markdown: kramdown
 highlighter: rouge
 kramdown:
-  input: GFM                            # use Github Flavored Markdown !important
+  input: GFM
 
-
-
-# 评论系统
-# Disqus（https://disqus.com/）
-# disqus_username: fujiahao
-
-
-# Gitalk
 gitalk:
-  enable: true    #是否开启Gitalk评论
-  clientID: Ov23liV2njKJV1af52E2                          #生成的clientID
-  clientSecret: 5c29bce719cdfe6ab3f1f49e81b99ab309b05f73    #生成的clientSecret
-  repo: fjh0805.github.io    #仓库名称
-  owner: fjh0805    #github用户名
+  enable: true
+  clientID: Ov23liV2njKJV1af52E2
+  clientSecret: 5c29bce719cdfe6ab3f1f49e81b99ab309b05f73
+  repo: fjh0805.github.io
+  owner: fjh0805
   admin: fjh0805
-  distractionFreeMode: true #是否启用类似FB的阴影遮罩
+  distractionFreeMode: true
 
+featured-tags: true
+featured-condition-size: 1
 
-# 统计
-
-# Analytics settings
-# Baidu Analytics
-# ba_track_id: b50bf2b12b5338a1845e33832976fd68
-
-# Google Analytics
-# ga_track_id: 'UA-90855596-1'            # Format: UA-xxxxxx-xx
-# ga_domain: qiubaiying.top               # 默认的是 auto, 这里我是自定义了的域名，你如果没有自己的域名，需要改成auto
-
-
-
-
-
-# Featured Tags
-featured-tags: true                     # 是否使用首页标签
-featured-condition-size: 1              # 相同标签数量大于这个数，才会出现在首页
-
-
-
-# Progressive Web Apps
-chrome-tab-theme-color: "#000000"
+chrome-tab-theme-color: "#f6f3ec"
 service-worker: true
 
+friends:
+  - { title: GitHub, href: https://github.com/fjh0805 }
+  - { title: 深圳大学, href: https://www.szu.edu.cn/ }
+  - { title: LeetCode, href: https://leetcode.cn/ }
+  - { title: Golang官网, href: https://golang.org/ }
+  - { title: 技术文档, href: https://devdocs.io/ }
 
-
-# Friends
-friends: [
-    {
-        title: "GitHub",
-        href: "https://github.com/fjh0805"
-    },{
-        title: "深圳大学",
-        href: "https://www.szu.edu.cn/"
-    },{
-        title: "LeetCode",
-        href: "https://leetcode.cn/"
-    },{
-        title: "Golang官网",
-        href: "https://golang.org/"
-    },{
-        title: "技术文档",
-        href: "https://devdocs.io/"
-    }
-]
+# 公开配置。client_id 与代理地址由站长自行填入，不要写入 token 或 client secret。
+writer:
+  owner: fjh0805
+  repo: fjh0805.github.io
+  branch: master
+  client_id: ""
+  oauth_proxy: ""

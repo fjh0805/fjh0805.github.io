@@ -1,43 +1,77 @@
 ---
-layout: page
-description: "探索技术的边界，记录成长的足迹 | 用代码改变世界"
+layout: default
+description: "JH 的技术笔记。就读于深圳大学计算机与软件学院，用 Golang 写后端，记录分布式系统、Agent 和学习总结。"
 ---
-
-{% for post in paginator.posts %}
-<div class="post-preview">
-    <a href="{{ post.url | prepend: site.baseurl }}">
-        <h2 class="post-title">
-            {{ post.title }}
-        </h2>
-        {% if post.subtitle %}
-        <h3 class="post-subtitle">
-            {{ post.subtitle }}
-        </h3>
-        {% endif %}
-        <div class="post-content-preview">
-            {{ post.content | strip_html | truncate:200 }}
+{% assign profile = site.data.profile %}
+<div class="page">
+    <section class="intro">
+        {% include portrait.html %}
+        <div class="intro-copy">
+            <p class="eyebrow">{{ profile.school }}</p>
+            <h1>{{ profile.name }}</h1>
+            <p class="quote">{{ profile.quote }}</p>
+            <p>{{ profile.zh.lead }}</p>
+            {% for paragraph in profile.zh.paragraphs %}
+            <p>{{ paragraph }}</p>
+            {% endfor %}
+            <ul class="inline-links">
+                <li><a href="{{ '/about/' | relative_url }}">关于</a></li>
+                <li><a href="{{ profile.github }}" rel="me noopener noreferrer">GitHub</a></li>
+                <li><a href="mailto:{{ profile.email }}">邮件</a></li>
+            </ul>
         </div>
-    </a>
-    <p class="post-meta">
-        Posted by {% if post.author %}{{ post.author }}{% else %}{{ site.title }}{% endif %} on {{ post.date | date: "%B
-        %-d, %Y" }}
-    </p>
-</div>
-<hr>
-{% endfor %}
+    </section>
 
-<!-- Pager -->
-{% if paginator.total_pages > 1 %}
-<ul class="pager">
-    {% if paginator.previous_page %}
-    <li class="previous">
-        <a href="{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/' }}">&larr; Newer Posts</a>
-    </li>
+    <section class="notes-section" aria-labelledby="notes-title">
+        <h2 id="notes-title">笔记</h2>
+        {% if paginator.posts.size > 0 %}
+        <ol class="notes">
+            {% for post in paginator.posts %}
+            {% include note.html post=post %}
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p class="empty">还没有笔记。</p>
+        {% endif %}
+
+        {% if paginator.total_pages > 1 %}
+        <nav class="pager" aria-label="分页">
+            {% if paginator.previous_page %}
+            <a href="{{ paginator.previous_page_path | relative_url }}">较新的</a>
+            {% endif %}
+            {% if paginator.next_page %}
+            <a href="{{ paginator.next_page_path | relative_url }}">较早的</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    </section>
+
+    {% if site.friends %}
+    <section class="links-section" aria-labelledby="links-title">
+        <h2 id="links-title">链接</h2>
+        <ul class="inline-links">
+            {% for friend in site.friends %}
+            <li><a href="{{ friend.href }}" rel="noopener noreferrer">{{ friend.title }}</a></li>
+            {% endfor %}
+        </ul>
+    </section>
     {% endif %}
-    {% if paginator.next_page %}
-    <li class="next">
-        <a href="{{ paginator.next_page_path | prepend: site.baseurl | replace: '//', '/' }}">Older Posts &rarr;</a>
-    </li>
-    {% endif %}
-</ul>
-{% endif %}
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": {{ profile.name | jsonify }},
+        "url": {{ '/' | absolute_url | jsonify }},
+        "email": {{ profile.email | prepend: 'mailto:' | jsonify }},
+        "image": {{ profile.portrait | absolute_url | jsonify }},
+        "sameAs": [{{ profile.github | jsonify }}],
+        "affiliation": {
+            "@type": "CollegeOrUniversity",
+            "name": {{ profile.school | jsonify }},
+            "url": "https://www.szu.edu.cn/"
+        },
+        "description": {{ profile.zh.lead | jsonify }}
+    }
+    </script>
+</div>

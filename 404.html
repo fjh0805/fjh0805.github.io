@@ -1,34 +1,14 @@
 ---
 layout: default
-description: "哎呀，页面走丢了 🤔"
-header-img: "img/404-bg.jpg"
+title: 页面不存在
+description: "这个地址没有对应的页面"
 permalink: /404.html
 ---
-
-
-<!-- Page Header -->
-<header class="intro-header"
-	style="background-image: url('{{ site.baseurl }}/{% if page.header-img %}{{ page.header-img }}{% else %}{{ site.header-img }}{% endif %}')">
-	<div class="container">
-		<div class="row">
-			<div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-				<div class="site-heading" id="tag-heading">
-					<h1>404</h1>
-					<span class="subheading">{{ page.description }}</span>
-					<div style="margin-top: 30px;">
-						<p style="color: #fff; font-size: 18px;">
-							您访问的页面不存在，可能已被移动或删除
-						</p>
-						<a href="{{ site.baseurl }}/" class="btn btn-primary" style="margin-top: 20px;">
-							🏠 返回首页
-						</a>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-</header>
-
-<script>
-	document.body.classList.add('page-fullscreen');
-</script>
+<div class="page">
+    <header class="page-head">
+        <p class="eyebrow">404</p>
+        <h1>页面不存在</h1>
+        <p class="dek">这个地址没有对应的页面，可能已经挪走了。</p>
+        <p><a class="button" href="{{ '/' | relative_url }}">回到首页</a></p>
+    </header>
+</div>

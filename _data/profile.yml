@@ -1,0 +1,43 @@
+name: JH
+portrait: /img/my-photo.jpg
+portrait_width: 2166
+portrait_height: 2704
+portrait_alt: JH 的照片
+email: fujiahao0805@gmail.com
+github: https://github.com/fjh0805
+school: 深圳大学计算机与软件学院
+quote: "永远年轻，永远热泪盈眶"
+zh:
+  lead: "Hi，我是 JH，2001年8月5日生于江西南昌，目前就读于深圳大学计算机与软件学院。"
+  paragraphs:
+    - "热爱编程，专注于后端开发，主要使用 Golang 进行开发。对分布式系统、Agent等领域有浓厚兴趣。"
+    - "这是我的个人技术博客，用来记录学习心得、技术总结和思考感悟。希望能与更多技术同行交流学习。"
+  quote: "爱我们爱的人, 至于那些恨我们的人, 就是灰尘而已"
+  motto: "Keep coding, keep thinking, keep growing"
+  links:
+    - { title: GitHub, href: https://github.com/fjh0805 }
+    - { title: LeetCode, href: https://leetcode.cn/ }
+    - { title: Golang, href: https://golang.org/ }
+    - { title: 深圳大学, href: https://www.szu.edu.cn/ }
+  stack:
+    - { label: 后端开发, value: "Golang, Python" }
+    - { label: 数据库, value: "MySQL, Redis" }
+    - { label: Agent, value: "MCP, RAG" }
+    - { label: 其他技能, value: "Linux, Git" }
+en:
+  lead: "Hi, I am JH, born on August 5th, 2001 in Nanchang, Jiangxi. Currently studying at Shenzhen University, School of Computer Science and Technology."
+  paragraphs:
+    - "Passionate about programming and focused on backend development, primarily using Golang. I have strong interests in distributed systems, microservices architecture, and performance optimization."
+    - "This is my personal tech blog where I document learning insights, technical summaries, and thoughtful reflections. I hope to connect and learn from fellow developers."
+  quote: "Stay hungry, stay foolish."
+  motto: "Code for the future, learn for today."
+  links:
+    - { title: GitHub, href: https://github.com/fjh0805 }
+    - { title: LeetCode, href: https://leetcode.cn/ }
+    - { title: Golang, href: https://golang.org/ }
+    - { title: Shenzhen University, href: https://www.szu.edu.cn/ }
+  stack:
+    - { label: Backend, value: "Golang, Java, Python" }
+    - { label: Database, value: "MySQL, Redis, MongoDB" }
+    - { label: Frameworks, value: "Gin, Spring Boot, Docker" }
+    - { label: Others, value: "Linux, Git, Microservices" }

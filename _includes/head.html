@@ -1,66 +1,38 @@
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="{{ site.description }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI">
+    {% assign page_description = page.description | default: page.subtitle | default: site.description %}
+    <meta name="description" content="{{ page_description | strip_html | strip_newlines | escape }}">
     <meta name="keywords" content="{{ site.keyword }}">
     <meta name="theme-color" content="{{ site.chrome-tab-theme-color }}">
+    <meta name="color-scheme" content="light">
+    {% if page.url == '/write/' %}
+    <meta name="robots" content="noindex, nofollow">
+    {% endif %}
 
-    <title>{% if page.title %}{{ page.title }} - {{ site.SEOTitle }}{% else %}{{ site.SEOTitle }}{% endif %}</title>
+    {% assign page_title = site.SEOTitle %}
+    {% if page.title %}{% assign page_title = page.title | append: ' · ' | append: site.title %}{% endif %}
+    <title>{{ page_title }}</title>
 
-    <!-- Web App Manifest -->
-    <link rel="manifest" href="{{ site.baseurl }}/pwa/manifest.json">
+    <link rel="canonical" href="{{ page.url | absolute_url }}">
+    <link rel="alternate" type="application/rss+xml" title="{{ site.SEOTitle }}" href="{{ '/feed.xml' | absolute_url }}">
 
-    <!-- Favicon -->
-    <link rel="icon" href="{{ site.baseurl }}/img/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="{{ site.baseurl }}/img/favicon.ico" type="image/x-icon">
-    <link rel="shortcut icon" href="{{ site.baseurl }}/img/favicon.ico" type="image/x-icon">
+    <meta property="og:title" content="{{ page_title }}">
+    <meta property="og:description" content="{{ page_description | strip_html | strip_newlines | escape }}">
+    <meta property="og:type" content="{% if page.date %}article{% else %}website{% endif %}">
+    <meta property="og:url" content="{{ page.url | absolute_url }}">
+    <meta property="og:image" content="{{ site.data.profile.portrait | absolute_url }}">
+    <meta property="og:locale" content="zh_CN">
+    <meta name="twitter:card" content="summary">
 
-    <!-- Apple Touch Icons -->
-    <link rel="apple-touch-icon" href="{{ site.baseurl }}/img/apple-touch-icon.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ site.baseurl }}/img/apple-touch-icon.png">
+    <link rel="manifest" href="{{ '/pwa/manifest.json' | relative_url }}">
+    <link rel="icon" href="{{ '/img/favicon.svg' | relative_url }}" type="image/svg+xml">
+    <link rel="icon" href="{{ '/img/favicon.ico' | relative_url }}" type="image/x-icon">
+    <link rel="apple-touch-icon" href="{{ '/img/apple-touch-icon.png' | relative_url }}">
 
-    <!-- 确保浏览器缓存更新 -->
-    <meta name="msapplication-TileImage" content="{{ site.baseurl }}/img/apple-touch-icon.png">
-    <meta name="msapplication-TileColor" content="#667eea">
-
-    <!-- Canonical URL -->
-    <link rel="canonical" href="{{ page.url | replace:'index.html','' | prepend: site.baseurl | prepend: site.url }}">
-
-    <!-- Bootstrap Core CSS -->
-    <link rel="stylesheet" href="{{ " /css/bootstrap.min.css" | prepend: site.baseurl }}">
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ " /css/hux-blog.min.css" | prepend: site.baseurl }}">
-
-    <!-- Enhanced Custom CSS -->
-    <link rel="stylesheet" href="{{ " /css/custom.css" | prepend: site.baseurl }}">
-
-    <!-- Pygments Github CSS -->
-    <link rel="stylesheet" href="{{ " /css/syntax.css" | prepend: site.baseurl }}">
-
-    <!-- Custom Fonts -->
-    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
-    <!-- Hux change font-awesome CDN to qiniu -->
-    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet"
-        type="text/css">
-
-
-    <!-- Hux Delete, sad but pending in China
-    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
-    css'>
-    -->
-
-
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]-->
-
-    <!-- ga & ba script hoook -->
-    <script></script>
+    <link rel="stylesheet" href="{{ '/css/site.css' | relative_url }}">
+    {% if page.url == '/write/' %}
+    <link rel="stylesheet" href="{{ '/css/write.css' | relative_url }}">
+    {% endif %}
 </head>
