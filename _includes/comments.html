@@ -1,28 +1,28 @@
-{% if site.gitalk.enable %}
 <section class="comments" aria-label="评论">
     <h2>评论</h2>
-    <link rel="stylesheet" href="https://unpkg.com/gitalk@1.8.0/dist/gitalk.css">
-    <script src="https://unpkg.com/gitalk@1.8.0/dist/gitalk.min.js"></script>
-    {% unless include.fixed_id %}
-    <script src="{{ '/js/md5.min.js' | relative_url }}"></script>
-    {% endunless %}
-    <div id="gitalk-container"></div>
-    <script>
-        var gitalk = new Gitalk({
-            clientID: {{ site.gitalk.clientID | jsonify }},
-            clientSecret: {{ site.gitalk.clientSecret | jsonify }},
-            repo: {{ site.gitalk.repo | jsonify }},
-            owner: {{ site.gitalk.owner | jsonify }},
-            admin: [{{ site.gitalk.admin | jsonify }}],
-            distractionFreeMode: {{ site.gitalk.distractionFreeMode }},
-            {% assign gitalk_proxy = site.gitalk.proxy | default: "" | strip %}
-            {% if gitalk_proxy != "" %}
-            proxy: {{ gitalk_proxy | jsonify }},
-            {% endif %}
-            id: {% if include.fixed_id %}{{ include.fixed_id | jsonify }}{% else %}md5(location.pathname){% endif %}
-        });
-        gitalk.render("gitalk-container");
+    {% assign comment_repo = site.comments.repo | default: "" | strip %}
+    {% assign comment_repo_id = site.comments.repo_id | default: "" | strip %}
+    {% assign comment_category = site.comments.category | default: "" | strip %}
+    {% assign comment_category_id = site.comments.category_id | default: "" | strip %}
+    {% if comment_repo != "" and comment_repo_id != "" and comment_category != "" and comment_category_id != "" %}
+    <div class="giscus"></div>
+    <script src="https://giscus.app/client.js"
+            data-repo="{{ comment_repo }}"
+            data-repo-id="{{ comment_repo_id }}"
+            data-category="{{ comment_category }}"
+            data-category-id="{{ comment_category_id }}"
+            data-mapping="pathname"
+            data-strict="1"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="bottom"
+            data-theme="{{ '/css/giscus.css' | absolute_url }}"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
     </script>
-    <script type="module" src="{{ '/js/gitalk-guard.js' | relative_url }}"></script>
+    {% else %}
+    <p class="comments-note">评论还没接上。讨论区需要仓库编号和分类编号都填进 <code>_config.yml</code> 的 <code>comments</code> 后才会加载，避免停在转圈。</p>
+    {% endif %}
 </section>
-{% endif %}
