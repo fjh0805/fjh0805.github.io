@@ -148,6 +148,12 @@ export function buildContentsRequest({ message, contentBase64, sha, branch }) {
     return body;
 }
 
+export function writerGateMessage(config, loaded) {
+    if (!loaded) return "写作配置没有加载。";
+    if (!publishingConfigured(config)) return "写作还没有启用。";
+    return "需要 GitHub 登录。";
+}
+
 export function publishingConfigured(config) {
     if (!config) return false;
     try {

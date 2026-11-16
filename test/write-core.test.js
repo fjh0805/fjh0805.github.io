@@ -13,6 +13,7 @@ import {
     parseTagInput,
     postPath,
     publishingConfigured,
+    writerGateMessage,
     renderMarkdown,
     replaceDraftImages,
     slugify,
@@ -109,6 +110,13 @@ test("publish config and owner check reject anonymous writes", () => {
     }), false);
     assert.throws(() => assertOwner("someone", "fjh0805"));
     assert.doesNotThrow(() => assertOwner("FJH0805", "fjh0805"));
+});
+
+test("an empty writer config is not the same as a missing config file", () => {
+    const empty = { owner: "fjh0805", repo: "fjh0805.github.io", branch: "master", clientId: "", oauthProxy: "" };
+    assert.equal(writerGateMessage(empty, true), "写作还没有启用。");
+    assert.equal(writerGateMessage(null, false), "写作配置没有加载。");
+    assert.equal(publishingConfigured(empty), false);
 });
 
 test("repo write access comes from GitHub permissions, not a typed name", () => {
