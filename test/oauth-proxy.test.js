@@ -2,9 +2,53 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import worker, { isOriginAllowed, parseAllowlist, resolveUpstream } from "../writer/oauth-proxy/src/index.js";
 
+const DEVICE = "https://github.com/login/device/code";
+const TOKEN = "https://github.com/login/oauth/access_token";
+const USER = "https://api.github.com/user";
+const REPO = "https://api.github.com/repos/fjh0805/fjh0805.github.io";
+
+function sessionKey() {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return btoa(binary);
+}
+
+function proxyEnv(overrides = {}) {
+    return {
+        ALLOWED_ORIGINS: "https://fjh0805.github.io",
+        CLIENT_ID: "Iv1.publicclient",
+        SESSION_KEY: sessionKey(),
+        GITHUB_OWNER: "fjh0805",
+        GITHUB_REPO: "fjh0805.github.io",
+        GITHUB_BRANCH: "master",
+        ALLOWED_LOGIN: "fjh0805",
+        ...overrides
+    };
+}
+
+function jsonResponse(payload, status = 200) {
+    return new Response(JSON.stringify(payload), {
+        status,
+        headers: { "content-type": "application/json" }
+    });
+}
+
+function post(pathname, body, origin = "https://fjh0805.github.io") {
+    return new Request(`https://proxy.example${pathname}`, {
+        method: "POST",
+        headers: {
+            origin,
+            accept: "application/json",
+            "content-type": "application/json"
+        },
+        body: JSON.stringify(body ?? {})
+    });
+}
+
 test("only the two device-flow paths are forwarded", () => {
-    assert.equal(resolveUpstream("/login/device/code"), "https://github.com/login/device/code");
-    assert.equal(resolveUpstream("/login/oauth/access_token"), "https://github.com/login/oauth/access_token");
+    assert.equal(resolveUpstream("/login/device/code"), DEVICE);
+    assert.equal(resolveUpstream("/login/oauth/access_token"), TOKEN);
     assert.equal(resolveUpstream("/repos/fjh0805/fjh0805.github.io/contents/_posts/a.md"), "");
 });
 
@@ -21,14 +65,10 @@ test("disallowed browser origin is not forwarded", async () => {
     const original = globalThis.fetch;
     globalThis.fetch = async () => {
         called = true;
-        return new Response("no");
+        return jsonResponse({});
     };
     try {
-        const response = await worker.fetch(new Request("https://proxy.example/login/device/code", {
-            method: "POST",
-            headers: { origin: "https://evil.example", "content-type": "application/x-www-form-urlencoded" },
-            body: "client_id=abc"
-        }), { ALLOWED_ORIGINS: "https://fjh0805.github.io" });
+        const response = await worker.fetch(post("/login/device/code", { client_secret: "nope" }, "https://evil.example"), proxyEnv());
         assert.equal(response.status, 403);
         assert.equal(called, false);
     } finally {
@@ -36,31 +76,173 @@ test("disallowed browser origin is not forwarded", async () => {
     }
 });
 
-test("allowed device request is forwarded without logging the body", async () => {
+test("device flow ignores browser credentials and asks only for public_repo", async () => {
     const original = globalThis.fetch;
-    let forwarded = null;
+    let forwarded = "";
     globalThis.fetch = async (url, init) => {
-        forwarded = { url, body: new TextDecoder().decode(init.body) };
-        return new Response(JSON.stringify({ user_code: "ABCD-1234" }), {
-            status: 200,
-            headers: { "content-type": "application/json" }
+        assert.equal(String(url), DEVICE);
+        forwarded = String(init.body);
+        return jsonResponse({
+            user_code: "WDJB-MJHT",
+            device_code: "a".repeat(40),
+            verification_uri: "https://github.com/login/device",
+            expires_in: 900,
+            interval: 5
         });
     };
     try {
-        const response = await worker.fetch(new Request("https://proxy.example/login/device/code", {
-            method: "POST",
-            headers: {
-                origin: "https://fjh0805.github.io",
-                accept: "application/json",
-                "content-type": "application/x-www-form-urlencoded"
-            },
-            body: "client_id=public&scope=repo"
-        }), { ALLOWED_ORIGINS: "https://fjh0805.github.io" });
+        const response = await worker.fetch(post("/login/device/code", {
+            client_id: "browser-supplied",
+            client_secret: "must-not-forward",
+            scope: "repo"
+        }), proxyEnv());
         assert.equal(response.status, 200);
         assert.equal(response.headers.get("access-control-allow-origin"), "https://fjh0805.github.io");
-        assert.equal(forwarded.url, "https://github.com/login/device/code");
-        assert.equal(forwarded.body, "client_id=public&scope=repo");
-        assert.equal(await response.json().then((data) => data.user_code), "ABCD-1234");
+        assert.equal(forwarded.includes("must-not-forward"), false);
+        assert.equal(forwarded.includes("browser-supplied"), false);
+        assert.match(forwarded, /^client_id=Iv1\.publicclient&scope=public_repo$/);
+        const body = await response.json();
+        assert.equal(body.user_code, "WDJB-MJHT");
+        assert.equal(body.client_secret, undefined);
+    } finally {
+        globalThis.fetch = original;
+    }
+});
+
+test("a token for another account is dropped before it reaches the browser", async () => {
+    const original = globalThis.fetch;
+    const githubToken = "kept-away-from-the-browser";
+    globalThis.fetch = async (url) => {
+        if (String(url) === TOKEN) return jsonResponse({ access_token: githubToken, scope: "public_repo" });
+        if (String(url) === USER) return jsonResponse({ login: "someone" });
+        throw new Error(String(url));
+    };
+    try {
+        const response = await worker.fetch(post("/login/oauth/access_token", { device_code: "a".repeat(40) }), proxyEnv());
+        const text = await response.text();
+        assert.equal(response.status, 403);
+        assert.equal(text.includes(githubToken), false);
+        assert.equal(text.includes("access_token"), false);
+        assert.equal(JSON.parse(text).error, "not_authorized");
+    } finally {
+        globalThis.fetch = original;
+    }
+});
+
+test("write permission without the owner login is still refused", async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+        const href = String(url);
+        if (href === TOKEN) return jsonResponse({ access_token: "collaborator-token" });
+        if (href === USER) return jsonResponse({ login: "collaborator" });
+        if (href === REPO) return jsonResponse({ permissions: { push: true, admin: true } });
+        throw new Error(href);
+    };
+    try {
+        const response = await worker.fetch(post("/login/oauth/access_token", { device_code: "b".repeat(40) }), proxyEnv());
+        assert.equal(response.status, 403);
+        assert.equal((await response.text()).includes("collaborator-token"), false);
+    } finally {
+        globalThis.fetch = original;
+    }
+});
+
+test("the owner can publish only through checked repo paths", async () => {
+    const original = globalThis.fetch;
+    const githubToken = "owner-token-stays-on-worker";
+    const puts = [];
+    globalThis.fetch = async (url, init = {}) => {
+        const href = String(url);
+        if (href === TOKEN) return jsonResponse({ access_token: githubToken });
+        if (href === USER) return jsonResponse({ login: "fjh0805" });
+        if (href.startsWith(`${REPO}/contents/`)) {
+            if (init.method === "PUT") {
+                puts.push({ url: href, body: JSON.parse(init.body), authorization: init.headers.authorization });
+                return jsonResponse({ commit: { html_url: "https://github.com/fjh0805/fjh0805.github.io/commit/abc" } });
+            }
+            return new Response("missing", { status: 404 });
+        }
+        if (href === REPO) return jsonResponse({ permissions: { push: true } });
+        throw new Error(href);
+    };
+    try {
+        const settings = proxyEnv();
+        const login = await worker.fetch(post("/login/oauth/access_token", { device_code: "c".repeat(40) }), settings);
+        const loginBody = await login.json();
+        assert.equal(login.status, 200);
+        assert.equal(loginBody.login, "fjh0805");
+        assert.equal(typeof loginBody.session, "string");
+        assert.equal(JSON.stringify(loginBody).includes(githubToken), false);
+        assert.equal(loginBody.access_token, undefined);
+
+        const who = await worker.fetch(post("/session/whoami", { session: loginBody.session }), settings);
+        assert.equal((await who.json()).login, "fjh0805");
+
+        const escaped = await worker.fetch(post("/repo/write", {
+            session: loginBody.session,
+            path: "_posts/../_config.yml",
+            message: "不要写这个",
+            content: "YQ=="
+        }), settings);
+        assert.equal(escaped.status, 400);
+        assert.equal(puts.length, 0);
+
+        const image = await worker.fetch(post("/repo/write", {
+            session: loginBody.session,
+            path: "img/posts/note/picture.jpg",
+            message: "添加图片 img/posts/note/picture.jpg",
+            content: "YQ=="
+        }), settings);
+        const written = await image.json();
+        assert.equal(image.status, 200);
+        assert.equal(written.commitUrl, "https://github.com/fjh0805/fjh0805.github.io/commit/abc");
+        assert.equal(JSON.stringify(written).includes(githubToken), false);
+        assert.equal(puts.length, 1);
+        assert.equal(puts[0].url, `${REPO}/contents/img/posts/note/picture.jpg`);
+        assert.equal(puts[0].body.branch, "master");
+        assert.equal(puts[0].body.content, "YQ==");
+        assert.equal(puts[0].authorization, `Bearer ${githubToken}`);
+
+        const missing = await worker.fetch(post("/repo/read", {
+            session: loginBody.session,
+            path: "README.md"
+        }), settings);
+        assert.equal(missing.status, 400);
+    } finally {
+        globalThis.fetch = original;
+    }
+});
+
+test("the owner login without repository write permission gets no session", async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+        const href = String(url);
+        if (href === TOKEN) return jsonResponse({ access_token: "owner-without-push" });
+        if (href === USER) return jsonResponse({ login: "fjh0805" });
+        if (href === REPO) return jsonResponse({ permissions: { pull: true, push: false } });
+        throw new Error(href);
+    };
+    try {
+        const response = await worker.fetch(post("/login/oauth/access_token", { device_code: "d".repeat(40) }), proxyEnv());
+        const text = await response.text();
+        assert.equal(response.status, 403);
+        assert.equal(text.includes("owner-without-push"), false);
+    } finally {
+        globalThis.fetch = original;
+    }
+});
+
+test("an unconfigured proxy does not call GitHub", async () => {
+    const original = globalThis.fetch;
+    let called = false;
+    globalThis.fetch = async () => {
+        called = true;
+        return jsonResponse({});
+    };
+    try {
+        const response = await worker.fetch(post("/login/device/code", {}), proxyEnv({ CLIENT_ID: "" }));
+        assert.equal(response.status, 503);
+        assert.equal(called, false);
     } finally {
         globalThis.fetch = original;
     }
@@ -69,8 +251,6 @@ test("allowed device request is forwarded without logging the body", async () =>
 test("health and unknown routes stay small", async () => {
     const health = await worker.fetch(new Request("https://proxy.example/health"), {});
     assert.equal(health.status, 200);
-    const missing = await worker.fetch(new Request("https://proxy.example/anything", { method: "POST" }), {
-        ALLOWED_ORIGINS: "https://fjh0805.github.io"
-    });
+    const missing = await worker.fetch(new Request("https://proxy.example/anything", { method: "POST" }), proxyEnv());
     assert.equal(missing.status, 404);
 });

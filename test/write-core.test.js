@@ -12,7 +12,13 @@ import {
     parsePostDocument,
     parseTagInput,
     postPath,
+    clipboardImageFiles,
+    extensionForImage,
+    imagesStillToUpload,
+    publishFingerprint,
     publishingConfigured,
+    safeCommitUrl,
+    safeVerificationUri,
     writerGateMessage,
     renderMarkdown,
     replaceDraftImages,
@@ -91,32 +97,54 @@ test("publish config and owner check reject anonymous writes", () => {
         owner: "fjh0805",
         repo: "fjh0805.github.io",
         branch: "master",
-        clientId: "",
         oauthProxy: ""
     }), false);
     assert.equal(publishingConfigured({
         owner: "fjh0805",
         repo: "fjh0805.github.io",
         branch: "master",
-        clientId: "Iv23liExampleClient",
         oauthProxy: "https://oauth.example.workers.dev"
     }), true);
     assert.equal(publishingConfigured({
         owner: "fjh0805",
         repo: "fjh0805.github.io",
         branch: "master",
-        clientId: "Iv23liExampleClient",
         oauthProxy: "http://oauth.example.workers.dev"
     }), false);
     assert.throws(() => assertOwner("someone", "fjh0805"));
+    assert.throws(() => assertOwner("", "fjh0805"));
     assert.doesNotThrow(() => assertOwner("FJH0805", "fjh0805"));
 });
 
 test("an empty writer config is not the same as a missing config file", () => {
-    const empty = { owner: "fjh0805", repo: "fjh0805.github.io", branch: "master", clientId: "", oauthProxy: "" };
+    const empty = { owner: "fjh0805", repo: "fjh0805.github.io", branch: "master", oauthProxy: "" };
     assert.equal(writerGateMessage(empty, true), "写作还没有启用。");
     assert.equal(writerGateMessage(null, false), "写作配置没有加载。");
     assert.equal(publishingConfigured(empty), false);
+});
+
+test("image paste, upload resume, and duplicate publish are explicit", () => {
+    const png = { type: "image/png" };
+    const text = { type: "text/plain" };
+    assert.equal(clipboardImageFiles(null).length, 0);
+    assert.equal(clipboardImageFiles({ files: [text, png] }).length, 1);
+    assert.equal(clipboardImageFiles({
+        files: [],
+        items: [{ kind: "file", getAsFile: () => png }]
+    })[0], png);
+    assert.equal(extensionForImage("image/jpeg"), "jpg");
+    assert.equal(extensionForImage("image/heic"), "");
+    const images = [{ id: "a", remotePath: "" }, { id: "b", remotePath: "/img/posts/note/b.jpg" }];
+    assert.deepEqual(imagesStillToUpload(images).map((image) => image.id), ["a"]);
+    const first = publishFingerprint({ title: "笔记", body: "![图](draft:a)", existingPath: "" });
+    const same = publishFingerprint({ title: "笔记", body: "![图](draft:a)", existingPath: "" });
+    const edited = publishFingerprint({ title: "笔记", body: "改过", existingPath: "" });
+    assert.equal(first, same);
+    assert.notEqual(first, edited);
+    assert.equal(safeVerificationUri("https://evil.example/login/device"), "https://github.com/login/device");
+    assert.equal(safeVerificationUri("https://github.com/login/device"), "https://github.com/login/device");
+    assert.equal(safeCommitUrl("https://github.com/fjh0805/fjh0805.github.io/commit/abc"), "https://github.com/fjh0805/fjh0805.github.io/commit/abc");
+    assert.equal(safeCommitUrl("https://example.com/commit/abc"), "");
 });
 
 test("repo write access comes from GitHub permissions, not a typed name", () => {

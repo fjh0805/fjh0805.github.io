@@ -1,8 +1,31 @@
+import {
+    assertOwner,
+    clipboardImageFiles,
+    extensionForImage,
+    hasRepoWritePermission,
+    imagesStillToUpload,
+    isExistingPostPath,
+    isPublishablePath,
+    publishFingerprint,
+    safeCommitUrl,
+    safeVerificationUri
+} from "./write-policy.js";
+
+export {
+    assertOwner,
+    clipboardImageFiles,
+    extensionForImage,
+    hasRepoWritePermission,
+    imagesStillToUpload,
+    isExistingPostPath,
+    isPublishablePath,
+    publishFingerprint,
+    safeCommitUrl,
+    safeVerificationUri
+};
+
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const NEW_POST = /^_posts\/\d{4}-\d{2}-\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*\.md$/;
-const EXISTING_POST = /^_posts\/[^/\\?#%]+\.md$/;
-const IMAGE = /^img\/posts\/[a-z0-9]+(?:-[a-z0-9]+)*\/[a-z0-9][a-z0-9.-]*\.(png|jpe?g|gif|webp)$/;
 
 export function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -34,15 +57,6 @@ export function parseTagInput(value) {
 
 export function yamlQuote(value) {
     return `"${String(value ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-}
-
-export function isExistingPostPath(path) {
-    return typeof path === "string" && EXISTING_POST.test(path) && !path.includes("..");
-}
-
-export function isPublishablePath(path) {
-    if (typeof path !== "string" || path.includes("..") || path.startsWith("/") || path.includes("\\")) return false;
-    return NEW_POST.test(path) || isExistingPostPath(path) || IMAGE.test(path);
 }
 
 export function postPath(date, slug) {
@@ -155,31 +169,13 @@ export function writerGateMessage(config, loaded) {
 }
 
 export function publishingConfigured(config) {
-    if (!config) return false;
+    if (!config?.owner || !config.repo || !config.branch) return false;
     try {
         const proxy = new URL(config.oauthProxy);
-        if (proxy.protocol !== "https:") return false;
+        return proxy.protocol === "https:";
     } catch {
         return false;
     }
-    return Boolean(
-        config.owner &&
-        config.repo &&
-        config.branch &&
-        /^[A-Za-z0-9._-]{8,100}$/.test(config.clientId || "")
-    );
-}
-
-export function assertOwner(login, owner) {
-    if (!login || !owner || String(login).toLowerCase() !== String(owner).toLowerCase()) {
-        throw new Error("当前 GitHub 账号不能发布到这个站点");
-    }
-}
-
-export function hasRepoWritePermission(repository) {
-    const permissions = repository && repository.permissions;
-    if (!permissions || typeof permissions !== "object") return false;
-    return permissions.push === true || permissions.maintain === true || permissions.admin === true;
 }
 
 export function utf8ToBase64(text) {
