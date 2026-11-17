@@ -4,12 +4,12 @@
   "description": "JH 的个人技术博客，记录后端、Golang 与学习笔记",
   "icons": [
     {
-      "src": "icons/pwa_icon_128.png",
+      "src": "icons/pwa_icon_128.png?v=pikachu2",
       "sizes": "128x128",
       "type": "image/png"
     },
     {
-      "src": "icons/pwa_icon_512.png",
+      "src": "icons/pwa_icon_512.png?v=pikachu2",
       "sizes": "512x512",
       "type": "image/png"
     }
