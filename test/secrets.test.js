@@ -37,4 +37,6 @@ test("writer config points at the public proxy and has no publish credentials", 
     assert.equal(browser.includes("api.github.com"), false);
     assert.equal(browser.includes("client_secret"), false);
     assert.equal(browser.includes("Bearer"), false);
+    assert.match(browser, /text\/plain;charset=UTF-8/);
+    assert.equal(browser.includes("application/json"), false);
 });

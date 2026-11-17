@@ -76,6 +76,39 @@ test("disallowed browser origin is not forwarded", async () => {
     }
 });
 
+test("a plain text body still starts device flow without reading browser secrets", async () => {
+    const original = globalThis.fetch;
+    let forwarded = "";
+    globalThis.fetch = async (url, init) => {
+        assert.equal(String(url), DEVICE);
+        forwarded = String(init.body);
+        return jsonResponse({
+            user_code: "ABCD-EFGH",
+            device_code: "d".repeat(40),
+            verification_uri: "https://github.com/login/device",
+            expires_in: 900,
+            interval: 5
+        });
+    };
+    try {
+        const response = await worker.fetch(new Request("https://proxy.example/login/device/code", {
+            method: "POST",
+            headers: {
+                origin: "https://fjh0805.github.io",
+                "content-type": "text/plain;charset=UTF-8"
+            },
+            body: JSON.stringify({ client_secret: "must-not-forward", scope: "repo" })
+        }), proxyEnv());
+        assert.equal(response.status, 200);
+        assert.equal(response.headers.get("access-control-allow-origin"), "https://fjh0805.github.io");
+        assert.equal(forwarded.includes("must-not-forward"), false);
+        assert.match(forwarded, /scope=public_repo/);
+        assert.equal((await response.json()).user_code, "ABCD-EFGH");
+    } finally {
+        globalThis.fetch = original;
+    }
+});
+
 test("device flow ignores browser credentials and asks only for public_repo", async () => {
     const original = globalThis.fetch;
     let forwarded = "";

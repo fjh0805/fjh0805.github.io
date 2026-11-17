@@ -12,7 +12,7 @@
 
 页面上的用户名判断挡不住伪造的接口响应。真正写入由代理转给 GitHub Contents API，仓库没有写权限时 GitHub 会拒绝。不要把仓库写权限授给别人。别人即使绕过这个页面，也只有在 GitHub 上有写权限时才能改仓库。
 
-授权范围固定为 `public_repo`，由代理填上，页面不能改成更大的范围。代理不申请 `offline_access`。OAuth App 的 Device Flow 默认只返回长期访问令牌，响应里没有 `expires_in` 和 `refresh_token`。如果在 OAuth App 里打开了过期用户令牌，访问令牌会在 8 小时后失效，并附带刷新令牌。这个代理只密封访问令牌，不保存、不刷新那个刷新令牌，也不因此引入 Client Secret。令牌过期后 GitHub 返回 401，写作会要求重新登录。
+浏览器只用 `text/plain` 把请求发给代理，避免 `application/json` 触发的预检把连不上的情况显示成没有状态码的 `Failed to fetch`。来源仍必须是 `https://fjh0805.github.io`。授权范围固定为 `public_repo`，由代理填上，页面不能改成更大的范围。代理不申请 `offline_access`。OAuth App 的 Device Flow 默认只返回长期访问令牌，响应里没有 `expires_in` 和 `refresh_token`。如果在 OAuth App 里打开了过期用户令牌，访问令牌会在 8 小时后失效，并附带刷新令牌。这个代理只密封访问令牌，不保存、不刷新那个刷新令牌，也不因此引入 Client Secret。令牌过期后 GitHub 返回 401，写作会要求重新登录。
 
 ## 配置
 

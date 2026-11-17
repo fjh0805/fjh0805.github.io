@@ -371,11 +371,24 @@ function downloadMarkdown() {
 }
 
 async function proxy(path, payload) {
-    const response = await fetch(`${state.config.oauthProxy.replace(/\/$/, "")}${path}`, {
-        method: "POST",
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
-        body: JSON.stringify(payload ?? {})
-    });
+    const url = `${state.config.oauthProxy.replace(/\/$/, "")}${path}`;
+    let response;
+    try {
+        // This content type is CORS-safelisted, so the browser sends one POST.
+        // A JSON content type forces a preflight; if that OPTIONS never completes,
+        // the browser only reports a fetch failure and hides the status.
+        response = await fetch(url, {
+            method: "POST",
+            mode: "cors",
+            credentials: "omit",
+            cache: "no-store",
+            headers: { "Content-Type": "text/plain;charset=UTF-8" },
+            body: JSON.stringify(payload ?? {})
+        });
+    } catch (error) {
+        const detail = error && error.message ? error.message : "网络错误";
+        throw new Error(`浏览器没有连上写作代理。${detail}`);
+    }
     let data = {};
     try {
         data = await response.json();
