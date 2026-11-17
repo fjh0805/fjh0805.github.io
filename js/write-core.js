@@ -47,6 +47,13 @@ export function slugify(value) {
         .replace(/-+$/g, "");
 }
 
+export function defaultPostSlug(title, seed) {
+    const fromTitle = slugify(title);
+    if (fromTitle) return fromTitle;
+    const clean = String(seed ?? "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 4);
+    return `note-${clean || "draft"}`;
+}
+
 export function parseTagInput(value) {
     return String(value ?? "")
         .split(/[,，]/)

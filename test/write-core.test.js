@@ -22,6 +22,7 @@ import {
     writerGateMessage,
     renderMarkdown,
     replaceDraftImages,
+    defaultPostSlug,
     slugify,
     utf8ToBase64
 } from "../js/write-core.js";
@@ -29,6 +30,9 @@ import {
 test("slug and post path stay inside _posts", () => {
     assert.equal(slugify("Escape Analysis!"), "escape-analysis");
     assert.equal(slugify("逃逸分析"), "");
+    assert.equal(defaultPostSlug("Escape Analysis", "unused"), "escape-analysis");
+    assert.equal(defaultPostSlug("手机笔记", "Ab12-zz"), "note-ab12");
+    assert.equal(defaultPostSlug("", ""), "note-draft");
     assert.equal(postPath("2026-11-16", "escape-analysis"), "_posts/2026-11-16-escape-analysis.md");
     assert.throws(() => postPath("2026/11/16", "ok"));
     assert.throws(() => postPath("2026-11-16", "../secret"));
