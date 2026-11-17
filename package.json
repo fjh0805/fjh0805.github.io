@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "build:editor": "esbuild writer/editor/live.js --bundle --format=esm --outfile=js/write-editor.js --minify"
+    "build:editor": "esbuild writer/editor/live.js --bundle --format=esm --outfile=js/write-editor.js --minify",
+    "build:pages-oauth": "node writer/oauth-proxy/pages/build.mjs"
   },
   "devDependencies": {
     "@codemirror/commands": "^6.11.1",
