@@ -1,7 +1,7 @@
 import {
     assertOwner,
     buildPostDocument,
-    clipboardImageFiles,
+    defaultPostSlug,
     extensionForImage,
     imagePath,
     imagesStillToUpload,
@@ -9,7 +9,6 @@ import {
     parseTagInput,
     publishFingerprint,
     publishingConfigured,
-    renderMarkdown,
     replaceDraftImages,
     safeCommitUrl,
     safeVerificationUri,
@@ -18,6 +17,7 @@ import {
     utf8ToBase64,
     writerGateMessage
 } from "./write-core.js";
+import { createWriterEditor } from "./write-editor.js";
 
 const SESSION_KEY = "jh-write-session";
 const state = {
@@ -25,6 +25,8 @@ const state = {
     configLoaded: false,
     unlocked: false,
     publishing: false,
+    sourceMode: false,
+    slugEdited: false,
     loginAttempt: 0,
     draftId: crypto.randomUUID(),
     existingPath: "",
@@ -36,9 +38,43 @@ const state = {
 const statusNode = document.querySelector("#status");
 const form = document.querySelector("#editor");
 const publishButton = document.querySelector("#publish");
+let bodyEditor = null;
+
+function bodyText() {
+    return bodyEditor ? bodyEditor.getMarkdown() : (document.querySelector("#post-body")?.value || "");
+}
+
+function setBodyText(value) {
+    const text = String(value ?? "");
+    const area = document.querySelector("#post-body");
+    if (area) area.value = text;
+    bodyEditor?.setMarkdown(text);
+}
+
+const saveNode = document.querySelector("#save-state");
 
 function setStatus(message) {
-    statusNode.replaceChildren(document.createTextNode(message || ""));
+    statusNode.replaceChildren();
+    if (!message) {
+        statusNode.hidden = true;
+        return;
+    }
+    statusNode.hidden = false;
+    statusNode.append(document.createTextNode(message));
+}
+
+function setSave(message) {
+    if (saveNode) saveNode.textContent = message || "";
+}
+
+function dockStatus(writing) {
+    const slot = document.querySelector(writing ? "#status-dock" : "#status-slot");
+    if (slot && statusNode.parentElement !== slot) slot.append(statusNode);
+}
+
+function setWriting(on) {
+    document.querySelector(".write-page").classList.toggle("is-writing", on);
+    dockStatus(on);
 }
 
 function readSession() {
@@ -63,7 +99,7 @@ function fields() {
         date: document.querySelector("#post-date").value,
         tags: parseTagInput(document.querySelector("#post-tags").value),
         slug: document.querySelector("#post-slug").value,
-        body: document.querySelector("#post-body").value
+        body: bodyText()
     };
 }
 
@@ -73,19 +109,35 @@ function fill(data) {
     document.querySelector("#post-date").value = (data.date || new Date().toISOString().slice(0, 10)).slice(0, 10);
     document.querySelector("#post-tags").value = (data.tags || []).join(", ");
     document.querySelector("#post-slug").value = data.slug || "";
-    document.querySelector("#post-body").value = data.body || "";
+    setBodyText(data.body || "");
+    ensureSlug();
+}
+
+function ensureSlug(force = false) {
+    const input = document.querySelector("#post-slug");
+    if (!state.existingPath) {
+        const current = slugify(input.value);
+        if (force || !current) {
+            input.value = state.slugEdited && current
+                ? current
+                : defaultPostSlug(document.querySelector("#post-title").value, state.draftId);
+        }
+    }
     updateSlugHint();
 }
 
 function updateSlugHint() {
     const hint = document.querySelector("#slug-preview");
+    const summary = document.querySelector("#settings-summary");
     const date = document.querySelector("#post-date").value;
+    const tags = parseTagInput(document.querySelector("#post-tags").value);
+    if (summary) summary.textContent = [date, tags.join("、")].filter(Boolean).join(" · ");
     if (state.existingPath) {
-        hint.textContent = `将覆盖 ${state.existingPath}`;
+        hint.textContent = "将覆盖原来的文章，网址不变。";
         return;
     }
     const slug = slugify(document.querySelector("#post-slug").value);
-    hint.textContent = slug && date ? `新文件 _posts/${date}-${slug}.md` : "新建文章需要一个英文文件名，例如 escape-analysis";
+    hint.textContent = slug && date ? `保存为 _posts/${date}-${slug}.md` : "";
 }
 
 function openDb() {
@@ -124,7 +176,7 @@ async function saveDraft(options = {}) {
         tx.onerror = () => reject(tx.error);
     });
     db.close();
-    if (!options.quiet) setStatus("草稿留在这台设备上，没有上传。");
+    if (!options.quiet) setSave("已保存在这台设备");
     await renderDrafts();
 }
 
@@ -172,9 +224,12 @@ function loadDraft(draft) {
     }));
     state.remoteUrls = {};
     state.lastFingerprint = "";
+    state.slugEdited = Boolean(draft.slug);
     fill(draft);
     renderImages();
-    setStatus("已打开本机草稿。");
+    setSourceMode(false);
+    setSave("已打开草稿");
+    setStatus("");
 }
 
 async function deleteDraft(id) {
@@ -204,24 +259,20 @@ function resetEditor() {
     state.images = [];
     state.remoteUrls = {};
     state.lastFingerprint = "";
+    state.slugEdited = false;
     fill({ date: new Date().toISOString().slice(0, 10) });
     renderImages();
-    document.querySelector("#preview").hidden = true;
+    setSourceMode(false);
+    document.querySelector("#post-title").focus();
 }
 
-function imageSources() {
-    const sources = { ...state.remoteUrls };
-    state.images.forEach((image) => {
-        if (!image.previewUrl && image.blob) image.previewUrl = URL.createObjectURL(image.blob);
-        sources[image.id] = image.previewUrl;
-    });
-    return sources;
-}
-
-function renderPreview() {
-    const preview = document.querySelector("#preview");
-    preview.innerHTML = renderMarkdown(fields().body, imageSources());
-    preview.hidden = false;
+function setSourceMode(on) {
+    state.sourceMode = Boolean(on);
+    bodyEditor?.setSourceMode(state.sourceMode);
+    const button = document.querySelector("#preview-toggle");
+    if (!button) return;
+    button.textContent = state.sourceMode ? "排版" : "源码";
+    button.setAttribute("aria-pressed", state.sourceMode ? "true" : "false");
 }
 
 function renderImages() {
@@ -235,19 +286,21 @@ function renderImages() {
         thumb.src = image.previewUrl || "";
         const name = document.createElement("span");
         name.className = "image-name";
-        name.textContent = image.remotePath ? `${image.filename} 已上传` : image.filename;
+        name.textContent = image.filename;
         const remove = document.createElement("button");
         remove.type = "button";
-        remove.textContent = "移除";
+        remove.textContent = "×";
+        remove.setAttribute("aria-label", "移除图片");
         remove.addEventListener("click", () => {
             if (image.previewUrl) URL.revokeObjectURL(image.previewUrl);
             state.images = state.images.filter((item) => item.id !== image.id);
+            setBodyText(bodyText().replace(new RegExp(`!\\[[^\\]]*\\]\\(draft:${image.id}\\)\\n?`), ""));
             renderImages();
-            if (!document.querySelector("#preview").hidden) renderPreview();
         });
         item.append(thumb, name, remove);
         list.append(item);
     });
+    bodyEditor?.refreshImages();
 }
 
 async function compressImage(file) {
@@ -272,10 +325,13 @@ async function compressImage(file) {
 }
 
 function insertAtCursor(text) {
+    if (bodyEditor) {
+        bodyEditor.insert(text);
+        return;
+    }
     const body = document.querySelector("#post-body");
     const start = body.selectionStart ?? body.value.length;
     body.setRangeText(text, start, body.selectionEnd ?? start, "end");
-    body.focus();
 }
 
 async function addImages(fileList) {
@@ -292,9 +348,8 @@ async function addImages(fileList) {
     }
     if (!added) return;
     renderImages();
-    renderPreview();
     await saveDraft({ quiet: true });
-    setStatus(added > 1 ? `已加上 ${added} 张图片，发布时才会上传。` : "已加上图片，发布时才会上传。");
+    setSave(added > 1 ? `已插入 ${added} 张图片` : "已插入图片");
 }
 
 function downloadMarkdown() {
@@ -372,17 +427,19 @@ async function publish() {
         showLoggedOut();
         return;
     }
+    ensureSlug(true);
     const current = fields();
     const fingerprint = publishFingerprint({ ...current, existingPath: state.existingPath });
     const referenced = referencedImageIds(current.body);
     const pending = imagesStillToUpload(state.images.filter((image) => referenced.includes(image.id)));
     if (state.lastFingerprint === fingerprint && pending.length === 0) {
-        setStatus("这篇刚才已经发布。改过之后再发。");
+        setStatus("这篇刚才已经发布。");
         return;
     }
     state.publishing = true;
     publishButton.disabled = true;
-    setStatus("正在发布。");
+    publishButton.textContent = "发布中";
+    setStatus("正在发布");
     try {
         const session = await verifyWriter(currentSession);
         writeSession(session);
@@ -394,9 +451,13 @@ async function publish() {
             if (!state.images.some((image) => image.id === id)) throw new Error("还有图片没有准备好");
         }
         const mapping = {};
-        for (const image of state.images) {
-            if (!referenced.includes(image.id)) continue;
+        const queue = state.images.filter((image) => referenced.includes(image.id));
+        let uploaded = 0;
+        const pendingCount = queue.filter((image) => !image.remotePath).length;
+        for (const image of queue) {
             if (!image.remotePath) {
+                uploaded += 1;
+                setStatus(pendingCount > 1 ? `正在上传图片 ${uploaded}/${pendingCount}` : "正在上传图片");
                 const path = imagePath(slug, image.filename);
                 await putFile(session.session, path, await blobToBase64(image.blob), `添加图片 ${path}`);
                 image.remotePath = `/${path}`;
@@ -404,6 +465,7 @@ async function publish() {
             }
             mapping[image.id] = image.remotePath;
         }
+        setStatus("正在发布");
         const body = replaceDraftImages(current.body, mapping);
         const doc = buildPostDocument({
             ...current,
@@ -417,14 +479,14 @@ async function publish() {
             utf8ToBase64(doc.markdown),
             `${state.existingPath ? "更新" : "发布"}：${current.title.trim()}`.slice(0, 180)
         );
-        document.querySelector("#post-body").value = body;
+        setBodyText(body);
         state.existingPath = doc.path;
         state.images = [];
         state.lastFingerprint = publishFingerprint({ ...fields(), existingPath: state.existingPath });
         renderImages();
         updateSlugHint();
         await saveDraft({ quiet: true, duringPublish: true });
-        setStatus("已提交。Pages 重新构建后才会出现在主页。");
+        setStatus("已发布。主页更新还要等一会儿。");
         const commitUrl = safeCommitUrl(result.commitUrl);
         if (commitUrl) {
             const link = document.createElement("a");
@@ -438,10 +500,11 @@ async function publish() {
     } catch (error) {
         const kept = state.images.some((image) => image.remotePath);
         const message = error.message || "发布失败";
-        setStatus(kept ? `${message} 已经传上去的图片会保留，再点发布即可继续。` : message);
+        setStatus(kept ? `${message} 再点发布会继续。` : message);
     } finally {
         state.publishing = false;
         publishButton.disabled = false;
+        publishButton.textContent = "发布";
     }
 }
 
@@ -487,21 +550,24 @@ async function openRemote(path) {
     state.existingPath = path;
     state.images = [];
     state.lastFingerprint = "";
+    state.slugEdited = true;
     fill({ ...parsed, slug: parts?.slug || "" });
     renderImages();
-    setStatus("已载入线上文章。发布时会覆盖原文件，网址不变。");
+    setSourceMode(false);
+    setStatus("已打开线上文章。");
 }
 
 function lockStudio() {
     state.unlocked = false;
     state.loginAttempt += 1;
+    state.slugEdited = false;
+    setWriting(false);
+    setSourceMode(false);
+    setSave("");
     const studio = document.querySelector("#studio");
     studio.hidden = true;
     document.querySelector("#remote-list").replaceChildren();
     document.querySelector("#draft-list").replaceChildren();
-    const preview = document.querySelector("#preview");
-    preview.hidden = true;
-    preview.replaceChildren();
     revokePreviews();
     state.draftId = crypto.randomUUID();
     state.existingPath = "";
@@ -527,7 +593,8 @@ async function enterStudio(session) {
     document.querySelector("#login").hidden = true;
     document.querySelector("#logout").hidden = false;
     document.querySelector("#device").hidden = true;
-    document.querySelector("#who").textContent = session.login ? `已登录 ${session.login}` : "已登录";
+    document.querySelector("#who").textContent = session.login || "";
+    setWriting(true);
     setStatus("");
     const drafts = await renderDrafts();
     if (drafts[0]) loadDraft(drafts[0]);
@@ -547,7 +614,7 @@ async function startLogin() {
         device.hidden = false;
         document.querySelector("#user-code").textContent = started.data.user_code;
         document.querySelector("#verify-link").href = safeVerificationUri(started.data.verification_uri);
-        setStatus("在 GitHub 页面输入验证码，然后回到这里。");
+        setStatus("在 GitHub 输入验证码，再回到这里。");
         let interval = Math.max(5, Number(started.data.interval) || 5) * 1000;
         const deadline = Date.now() + (Number(started.data.expires_in) || 900) * 1000;
         while (Date.now() < deadline) {
@@ -559,7 +626,7 @@ async function startLogin() {
                 const session = await verifyWriter({ session: token.data.session, login: token.data.login || "" });
                 writeSession(session);
                 await enterStudio(session);
-                setStatus("登录完成。发布凭证留在写作代理里，这个页面拿不到 GitHub 令牌。");
+                setStatus("");
                 return;
             }
             if (token.data.error === "authorization_pending") continue;
@@ -576,21 +643,50 @@ async function startLogin() {
 }
 
 let saveTimer = 0;
-form.addEventListener("submit", (event) => event.preventDefault());
-form.addEventListener("input", () => {
-    updateSlugHint();
+function scheduleSave() {
     if (!state.unlocked || state.publishing) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-        saveDraft({ quiet: true }).catch((error) => setStatus(error.message || "草稿保存失败"));
+        saveDraft({ quiet: true })
+            .then(() => setSave("已保存在这台设备"))
+            .catch((error) => setStatus(error.message || "草稿保存失败"));
     }, 600);
+}
+
+bodyEditor = createWriterEditor(document.querySelector("#writer-surface"), {
+    value: "",
+    resolveImage(id) {
+        const image = state.images.find((item) => item.id === id);
+        if (!image) return "";
+        if (!image.previewUrl && image.blob) image.previewUrl = URL.createObjectURL(image.blob);
+        return image.previewUrl || image.remotePath || "";
+    },
+    onChange(text) {
+        const area = document.querySelector("#post-body");
+        if (area) area.value = text;
+        scheduleSave();
+    },
+    onPasteImages(files) {
+        addImages(files).catch((error) => setStatus(error.message || "图片添加失败"));
+    }
+});
+
+form.addEventListener("submit", (event) => event.preventDefault());
+form.addEventListener("input", (event) => {
+    if (event.target.id === "post-slug") state.slugEdited = true;
+    if (event.target.id === "post-title" && !state.slugEdited && !state.existingPath) {
+        document.querySelector("#post-slug").value = defaultPostSlug(event.target.value, state.draftId);
+    }
+    updateSlugHint();
+    scheduleSave();
 });
 
 document.querySelector("#new-draft").addEventListener("click", () => {
     resetEditor();
-    setStatus("开始一篇新草稿。");
+    setSave("");
+    setStatus("");
 });
-document.querySelector("#preview-toggle").addEventListener("click", renderPreview);
+document.querySelector("#preview-toggle").addEventListener("click", () => setSourceMode(!state.sourceMode));
 document.querySelector("#download").addEventListener("click", () => {
     try {
         downloadMarkdown();
@@ -607,7 +703,7 @@ document.querySelector("#login").addEventListener("click", () => {
 document.querySelector("#logout").addEventListener("click", () => {
     writeSession(null);
     showLoggedOut();
-    setStatus("已退出。这篇设备上的草稿还在，下次登录后才能再看到。");
+    setStatus("已退出。");
 });
 document.querySelector("#copy-code").addEventListener("click", async () => {
     const code = document.querySelector("#user-code").textContent.trim();
@@ -619,16 +715,10 @@ document.querySelector("#copy-code").addEventListener("click", async () => {
         setStatus("请手动记下验证码。");
     }
 });
+document.querySelector("#post-slug").addEventListener("blur", () => ensureSlug(true));
 document.querySelector("#image-input").addEventListener("change", (event) => {
     addImages(event.target.files).catch((error) => setStatus(error.message || "图片添加失败"));
     event.target.value = "";
-});
-document.querySelector("#post-body").addEventListener("paste", (event) => {
-    if (!state.unlocked) return;
-    const files = clipboardImageFiles(event.clipboardData);
-    if (!files.length) return;
-    event.preventDefault();
-    addImages(files).catch((error) => setStatus(error.message || "图片添加失败"));
 });
 document.querySelector("#load-remote").addEventListener("click", () => {
     loadRemoteList().catch((error) => setStatus(error.message || "读取失败"));

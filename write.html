@@ -5,69 +5,78 @@ description: "登录后写笔记。"
 permalink: /write/
 ---
 <div class="page write-page">
-    <header class="page-head">
-        <h1>写作</h1>
-        <p id="who" class="write-lead"></p>
+    <header class="write-top" id="gate-head">
+        <div class="write-intro">
+            <h1>写作</h1>
+            <p id="who" class="write-lead"></p>
+        </div>
+        <button type="button" id="login" class="login" hidden>用 GitHub 登录</button>
+        <button type="button" id="logout" class="quiet" hidden>退出</button>
     </header>
 
-    <div class="write-actions" id="gate">
-        <button type="button" id="login" hidden>用 GitHub 登录</button>
-        <button type="button" id="logout" hidden>退出</button>
-    </div>
-    <div id="device" hidden>
+    <div id="device" class="device-card" hidden>
+        <p class="device-kicker">在 GitHub 输入验证码</p>
         <p class="user-code" id="user-code"></p>
-        <div class="write-actions device-actions">
+        <div class="device-actions">
             <button type="button" id="copy-code">复制验证码</button>
-            <a class="button" id="verify-link" href="https://github.com/login/device" rel="noopener noreferrer">在 GitHub 输入验证码</a>
+            <a class="button" id="verify-link" href="https://github.com/login/device" rel="noopener noreferrer">打开 GitHub</a>
         </div>
     </div>
-    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <div id="status-slot">
+        <p id="status" class="status" role="status" aria-live="polite" hidden></p>
+    </div>
 
     <div id="studio" hidden>
-        <div class="write-actions">
-            <button type="button" id="load-remote">读取已发布</button>
-        </div>
-        <ul id="remote-list" class="remote-list"></ul>
-
-        <form id="editor">
-            <label class="field">标题
-                <input id="post-title" name="title" autocomplete="off" required>
-            </label>
-            <label class="field">副标题
-                <input id="post-subtitle" name="subtitle" autocomplete="off">
-            </label>
-            <label class="field">日期
-                <input id="post-date" name="date" type="date" required>
-            </label>
-            <label class="field">标签
-                <input id="post-tags" name="tags" autocomplete="off" placeholder="用逗号分开">
-            </label>
-            <label class="field">英文文件名
-                <input id="post-slug" name="slug" autocomplete="off" placeholder="escape-analysis" inputmode="url" autocapitalize="none" spellcheck="false">
-            </label>
-            <p id="slug-preview" class="help"></p>
-            <label class="field">正文
-                <textarea id="post-body" name="body" placeholder="用 Markdown 写。可以直接粘贴截图。"></textarea>
-            </label>
-            <div class="field">
-                <span class="field-label">图片</span>
-                <label class="pick" for="image-input">从相册选择</label>
-                <input id="image-input" class="file-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple>
-                <p class="help">选中的图片会插进正文，并在下面预览。发布时才上传到仓库。</p>
+        <form id="editor" class="manuscript">
+            <input id="post-title" class="title-field" name="title" autocomplete="off" placeholder="标题" aria-label="标题" required>
+            <details class="settings" id="post-settings">
+                <summary>
+                    <span>文章设置</span>
+                    <span id="settings-summary" class="settings-summary"></span>
+                </summary>
+                <div class="settings-grid">
+                    <label class="field">副标题
+                        <input id="post-subtitle" name="subtitle" autocomplete="off">
+                    </label>
+                    <label class="field">日期
+                        <input id="post-date" name="date" type="date" required>
+                    </label>
+                    <label class="field">标签
+                        <input id="post-tags" name="tags" autocomplete="off" placeholder="用逗号分开">
+                    </label>
+                    <label class="field">文件名
+                        <input id="post-slug" name="slug" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="url">
+                    </label>
+                    <p id="slug-preview" class="help"></p>
+                </div>
+                <div class="settings-actions">
+                    <button type="button" id="new-draft">新的一篇</button>
+                    <button type="button" id="download">下载</button>
+                    <button type="button" id="load-remote">已发布的文章</button>
+                </div>
+                <ul id="remote-list" class="remote-list"></ul>
+                <p class="settings-label">本机草稿</p>
+                <ul id="draft-list" class="draft-list"></ul>
+            </details>
+            <div class="manuscript-body">
+                <textarea id="post-body" name="body" hidden aria-hidden="true"></textarea>
+                <div id="writer-surface"></div>
             </div>
-            <ul id="image-list" class="image-list"></ul>
         </form>
-
-        <div class="write-actions publish-bar">
-            <button type="button" id="new-draft">新草稿</button>
-            <button type="button" id="preview-toggle">预览</button>
-            <button type="button" id="download">下载 Markdown</button>
-            <button type="button" id="publish" class="primary">发布</button>
+        <div class="composer">
+            <div id="status-dock"></div>
+            <ul id="image-list" class="image-list"></ul>
+            <div class="composer-bar">
+                <p id="save-state" class="save-state"></p>
+                <div class="composer-tools">
+                    <label class="tool" for="image-input">图片</label>
+                    <input id="image-input" class="file-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple>
+                    <button type="button" id="preview-toggle" aria-pressed="false">源码</button>
+                    <button type="button" id="publish" class="primary">发布</button>
+                </div>
+            </div>
         </div>
-
-        <h2>本机草稿</h2>
-        <ul id="draft-list" class="draft-list"></ul>
-        <article id="preview" class="preview prose" hidden></article>
     </div>
 </div>
 <script type="module" src="{{ '/js/write.js' | relative_url }}"></script>
