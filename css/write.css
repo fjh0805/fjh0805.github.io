@@ -167,7 +167,6 @@
 }
 
 .title-field:focus,
-#post-body:focus,
 .settings input:focus,
 button:focus-visible,
 .tool:focus-visible,
@@ -279,29 +278,41 @@ summary:focus-visible {
     min-height: 16rem;
 }
 
-#post-body,
-.preview {
+#writer-surface,
+.cm-editor {
     flex: 1;
     width: 100%;
     min-height: 16rem;
-    margin: 0;
-    padding: 0.2rem 0 1rem;
-    border: 0;
-    border-radius: 0;
+}
+
+.cm-editor {
     background: transparent;
-    color: var(--ink);
+}
+
+.cm-scroller {
     font-family: var(--serif);
-    font-size: 1.2rem;
-    line-height: 1.75;
-    resize: none;
 }
 
-#post-body:focus {
-    outline: none;
+.cm-content {
+    font-family: var(--serif);
 }
 
-#post-body[hidden],
-.preview[hidden],
+.cm-codeblock {
+    font-family: var(--mono);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    background: var(--code-bg);
+    border-radius: 0.35rem;
+}
+
+.live-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0.55rem 0;
+    border-radius: 0.9rem;
+}
+
 .composer .image-list:empty {
     display: none !important;
 }
@@ -461,9 +472,12 @@ button:disabled,
         font-size: 3.15rem;
     }
 
-    #post-body,
-    .preview {
+    .cm-content {
         font-size: 1.28rem;
+    }
+
+    #writer-surface,
+    .cm-editor {
         min-height: 22rem;
     }
 
