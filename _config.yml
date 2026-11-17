@@ -59,10 +59,9 @@ friends:
   - { title: Golang官网, href: https://golang.org/ }
   - { title: 技术文档, href: https://devdocs.io/ }
 
-# 公开配置。client_id 与代理地址由站长自行填入，不要写入 token 或 client secret。
+# 公开配置。代理地址在写作代理部署后填写。不要写入 token、client id 或 client secret。
 writer:
   owner: fjh0805
   repo: fjh0805.github.io
   branch: master
-  client_id: ""
   oauth_proxy: ""

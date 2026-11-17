@@ -16,7 +16,10 @@ permalink: /write/
     </div>
     <div id="device" hidden>
         <p class="user-code" id="user-code"></p>
-        <p><a id="verify-link" href="https://github.com/login/device" rel="noopener noreferrer">在 GitHub 输入验证码</a></p>
+        <div class="write-actions device-actions">
+            <button type="button" id="copy-code">复制验证码</button>
+            <a class="button" id="verify-link" href="https://github.com/login/device" rel="noopener noreferrer">在 GitHub 输入验证码</a>
+        </div>
     </div>
     <p id="status" class="status" role="status" aria-live="polite"></p>
 
@@ -44,15 +47,18 @@ permalink: /write/
             </label>
             <p id="slug-preview" class="help"></p>
             <label class="field">正文
-                <textarea id="post-body" name="body"></textarea>
+                <textarea id="post-body" name="body" placeholder="用 Markdown 写。可以直接粘贴截图。"></textarea>
             </label>
-            <label class="field">图片
-                <input id="image-input" type="file" accept="image/*" multiple>
-            </label>
+            <div class="field">
+                <span class="field-label">图片</span>
+                <label class="pick" for="image-input">从相册选择</label>
+                <input id="image-input" class="file-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple>
+                <p class="help">选中的图片会插进正文，并在下面预览。发布时才上传到仓库。</p>
+            </div>
             <ul id="image-list" class="image-list"></ul>
         </form>
 
-        <div class="write-actions">
+        <div class="write-actions publish-bar">
             <button type="button" id="new-draft">新草稿</button>
             <button type="button" id="preview-toggle">预览</button>
             <button type="button" id="download">下载 Markdown</button>

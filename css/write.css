@@ -20,6 +20,7 @@ textarea,
 select {
     width: 100%;
     font: inherit;
+    font-size: 1rem;
     color: inherit;
     background: var(--paper-raised);
     border: 1px solid var(--line-strong);
@@ -40,22 +41,46 @@ textarea {
 }
 
 .write-actions {
-    position: sticky;
-    bottom: 0;
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    align-items: center;
     margin-top: 1rem;
-    padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
+}
+
+.publish-bar {
+    padding: 0.85rem 0 0.2rem;
     background: var(--paper);
     border-top: 1px solid var(--line);
 }
 
+.pick,
 .write-actions .button,
 .write-actions button {
     background: transparent;
     color: var(--ink);
     border: 1px solid var(--line-strong);
+}
+
+.pick {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-top: 0.2rem;
+    padding: 0.45rem 0.95rem;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
 }
 
 .write-actions .primary {
@@ -111,6 +136,34 @@ button:disabled,
     align-items: center;
     padding: 0.45rem 0;
     border-top: 1px solid var(--line);
+}
+
+.draft-list button,
+.image-list button,
+.remote-list button {
+    min-height: 2.75rem;
+}
+
+.image-list img {
+    width: 3.25rem;
+    height: 3.25rem;
+    object-fit: cover;
+    border-radius: 0.55rem;
+    flex: none;
+}
+
+.image-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.preview img {
+    display: block;
+    margin: 0.8rem 0;
+    border-radius: 0.8rem;
 }
 
 .preview {

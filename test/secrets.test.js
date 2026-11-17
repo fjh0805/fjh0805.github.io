@@ -27,8 +27,14 @@ test("public writer files do not embed publish credentials", async () => {
     }
 });
 
-test("writer config ships without a client id or proxy", async () => {
+test("writer config ships without a proxy or publish credentials", async () => {
     const config = await readFile(path.join(root, "_config.yml"), "utf8");
-    assert.match(config, /client_id:\s*""/);
     assert.match(config, /oauth_proxy:\s*""/);
+    assert.doesNotMatch(config, /client_id\s*:/);
+    assert.doesNotMatch(config, /client_secret/i);
+    assert.doesNotMatch(config, /access_token/i);
+    const browser = await readFile(path.join(root, "js/write.js"), "utf8");
+    assert.equal(browser.includes("api.github.com"), false);
+    assert.equal(browser.includes("client_secret"), false);
+    assert.equal(browser.includes("Bearer"), false);
 });
