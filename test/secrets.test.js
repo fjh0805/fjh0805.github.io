@@ -27,9 +27,9 @@ test("public writer files do not embed publish credentials", async () => {
     }
 });
 
-test("writer config ships without a proxy or publish credentials", async () => {
+test("writer config points at the public proxy and has no publish credentials", async () => {
     const config = await readFile(path.join(root, "_config.yml"), "utf8");
-    assert.match(config, /oauth_proxy:\s*""/);
+    assert.match(config, /oauth_proxy:\s*"https:\/\/jh-write-oauth\.fujiahao0791\.workers\.dev"/);
     assert.doesNotMatch(config, /client_id\s*:/);
     assert.doesNotMatch(config, /client_secret/i);
     assert.doesNotMatch(config, /access_token/i);
