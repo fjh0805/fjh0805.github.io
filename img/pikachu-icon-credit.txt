@@ -1,12 +1,10 @@
 Pikachu favicon source
 
-Photo: "Pikachu, Glasgow" by Rossographer.
-https://commons.wikimedia.org/wiki/File:Pikachu,_Glasgow_-_geograph.org.uk_-_8157392.jpg
-https://www.geograph.org.uk/photo/8157392
+Image: Pokémon #25 official artwork, the standard front illustration used by PokéAPI sprites.
+https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png
+Repository: https://github.com/PokeAPI/sprites
+The favicon is a crop of that file, keeping the face and ears. It is stored locally and not hotlinked.
 
-The photograph is licensed under Creative Commons Attribution-ShareAlike 2.0 Generic (CC BY-SA 2.0):
-https://creativecommons.org/licenses/by-sa/2.0/
-The favicon files are a crop of that photograph, limited to the face and ears, and remain under CC BY-SA 2.0. Attribution is required. Adaptations of these icon files must stay under the same license.
-
-Pikachu is a trademark and copyright of Nintendo, Creatures, Game Freak, and The Pokémon Company. This is a third-party street photograph, not an official asset. Pokémon's public support page says they do not grant permission to use the characters or materials: https://support.pokemon.com/hc/en-us/articles/360000634094-Can-I-use-Pok%C3%A9mon-images-or-materials
-This use is not a commercial clearance and is not an endorsement.
+PokéAPI hosts these sprites and does not grant a license for the character art. Pikachu is a trademark and copyright of Nintendo, Creatures, Game Freak, and The Pokémon Company. Pokémon's public support page says they do not authorize use of the characters or materials:
+https://support.pokemon.com/hc/en-us/articles/360000634094-Can-I-use-Pok%C3%A9mon-images-or-materials
+This is not a commercial clearance and not an endorsement.
