@@ -69,14 +69,34 @@ export function publishFingerprint(input) {
     });
 }
 
+export const GITHUB_DEVICE_URL = "https://github.com/login/device";
+
 export function safeVerificationUri(value) {
     try {
         const url = new URL(value || "");
-        if (url.origin === "https://github.com" && url.pathname === "/login/device") return url.toString();
+        if (url.origin === "https://github.com" && url.pathname === "/login/device") return GITHUB_DEVICE_URL;
     } catch {
         /* use the fixed device page */
     }
-    return "https://github.com/login/device";
+    return GITHUB_DEVICE_URL;
+}
+
+export function openVerificationTab(openImpl) {
+    const open = openImpl || (typeof window !== "undefined" && typeof window.open === "function" ? window.open.bind(window) : null);
+    if (typeof open !== "function") return { url: GITHUB_DEVICE_URL, blocked: true, window: null };
+    let opened = null;
+    try {
+        opened = open(GITHUB_DEVICE_URL, "_blank");
+    } catch {
+        opened = null;
+    }
+    if (!opened || opened.closed) return { url: GITHUB_DEVICE_URL, blocked: true, window: null };
+    try {
+        opened.opener = null;
+    } catch {
+        /* the new tab is already sealed */
+    }
+    return { url: GITHUB_DEVICE_URL, blocked: false, window: opened };
 }
 
 export function safeCommitUrl(value) {

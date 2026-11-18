@@ -11,6 +11,8 @@ import {
     publishingConfigured,
     replaceDraftImages,
     safeCommitUrl,
+    GITHUB_DEVICE_URL,
+    openVerificationTab,
     safeVerificationUri,
     slugify,
     splitPostPath,
@@ -36,6 +38,7 @@ const state = {
     profileSha: "",
     linksSha: "",
     editorMode: "post",
+    authWindow: null,
     images: [],
     remoteUrls: {},
     lastFingerprint: ""
@@ -611,7 +614,34 @@ async function openRemote(path) {
     setStatus("已打开这篇文章。看完排版后再保存。");
 }
 
+function closeWindow(target) {
+    if (!target) return;
+    try {
+        target.close();
+    } catch {
+        /* the tab is already gone */
+    }
+    if (state.authWindow === target) state.authWindow = null;
+}
+
+function replaceAuthWindow(next) {
+    const previous = state.authWindow;
+    state.authWindow = next || null;
+    if (previous && previous !== next) closeWindow(previous);
+}
+
+function clearDevicePrompt() {
+    const code = document.querySelector("#user-code");
+    if (code) code.textContent = "";
+    const link = document.querySelector("#verify-link");
+    if (link) link.href = GITHUB_DEVICE_URL;
+    const device = document.querySelector("#device");
+    if (device) device.hidden = true;
+}
+
 function lockStudio() {
+    closeWindow(state.authWindow);
+    clearDevicePrompt();
     state.unlocked = false;
     state.loginAttempt += 1;
     state.slugEdited = false;
@@ -863,20 +893,30 @@ async function enterStudio(session) {
     else resetEditor();
 }
 
-async function startLogin() {
+async function startLogin(tab) {
     const attempt = ++state.loginAttempt;
-    document.querySelector("#login").disabled = true;
+    const owned = tab && tab.window ? tab.window : null;
+    replaceAuthWindow(tab && !tab.blocked ? owned : null);
+    const loginButton = document.querySelector("#login");
+    loginButton.disabled = true;
+    const link = document.querySelector("#verify-link");
+    link.href = GITHUB_DEVICE_URL;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
     try {
         const started = await proxy("/login/device/code", {});
         if (attempt !== state.loginAttempt) return;
         if (!started.ok || !started.data.user_code || !started.data.device_code) {
+            closeWindow(owned);
             throw new Error(failureMessage(started.data, "无法开始 GitHub 登录"));
         }
         const device = document.querySelector("#device");
         device.hidden = false;
         document.querySelector("#user-code").textContent = started.data.user_code;
-        document.querySelector("#verify-link").href = safeVerificationUri(started.data.verification_uri);
-        setStatus("在 GitHub 输入验证码，再回到这里。");
+        link.href = safeVerificationUri(started.data.verification_uri);
+        setStatus(tab && tab.blocked
+            ? "浏览器拦住了新标签。请点「打开 GitHub」，这个页面会留在这里。"
+            : "授权页已在新标签打开。在那边输入验证码，再回到这里。");
         let interval = Math.max(5, Number(started.data.interval) || 5) * 1000;
         const deadline = Date.now() + (Number(started.data.expires_in) || 900) * 1000;
         while (Date.now() < deadline) {
@@ -885,6 +925,8 @@ async function startLogin() {
             const token = await proxy("/login/oauth/access_token", { device_code: started.data.device_code });
             if (attempt !== state.loginAttempt) return;
             if (token.data.session) {
+                closeWindow(owned);
+                clearDevicePrompt();
                 const session = await verifyWriter({ session: token.data.session, login: token.data.login || "" });
                 writeSession(session);
                 await enterStudio(session);
@@ -896,11 +938,15 @@ async function startLogin() {
                 interval += 5000;
                 continue;
             }
+            closeWindow(owned);
+            clearDevicePrompt();
             throw new Error(failureMessage(token.data, "GitHub 没有完成授权"));
         }
+        closeWindow(owned);
+        clearDevicePrompt();
         throw new Error("验证码过期了，请再试一次");
     } finally {
-        document.querySelector("#login").disabled = false;
+        loginButton.disabled = false;
     }
 }
 
@@ -979,7 +1025,8 @@ publishButton.addEventListener("click", () => {
     publish().catch((error) => setStatus(error.message || "发布失败"));
 });
 document.querySelector("#login").addEventListener("click", () => {
-    startLogin().catch((error) => setStatus(error.message || "登录失败"));
+    const tab = openVerificationTab();
+    startLogin(tab).catch((error) => setStatus(error.message || "登录失败"));
 });
 document.querySelector("#logout").addEventListener("click", () => {
     writeSession(null);

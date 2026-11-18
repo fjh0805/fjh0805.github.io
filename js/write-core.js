@@ -7,8 +7,10 @@ import {
     isExistingPostPath,
     isPublishablePath,
     publishFingerprint,
+    openVerificationTab,
     safeCommitUrl,
-    safeVerificationUri
+    safeVerificationUri,
+    GITHUB_DEVICE_URL
 } from "./write-policy.js";
 
 export {
@@ -20,8 +22,10 @@ export {
     isExistingPostPath,
     isPublishablePath,
     publishFingerprint,
+    openVerificationTab,
     safeCommitUrl,
-    safeVerificationUri
+    safeVerificationUri,
+    GITHUB_DEVICE_URL
 };
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
