@@ -27,6 +27,15 @@ test("public writer files do not embed publish credentials", async () => {
     }
 });
 
+test("the public navigation links to the writing page", async () => {
+    const nav = await readFile(path.join(root, "_data/navigation.yml"), "utf8");
+    assert.match(nav, /title:\s*写作/);
+    assert.match(nav, /url:\s*\/write\//);
+    const header = await readFile(path.join(root, "_includes/header.html"), "utf8");
+    assert.match(header, /site\.data\.navigation/);
+    assert.equal(header.includes("hidden"), false);
+});
+
 test("writer config points at the public proxy and has no publish credentials", async () => {
     const config = await readFile(path.join(root, "_config.yml"), "utf8");
     assert.match(config, /oauth_proxy:\s*"https:\/\/jh-write-oauth\.pages\.dev"/);
