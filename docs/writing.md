@@ -27,7 +27,7 @@
 2. 部署 `writer/oauth-proxy`。普通变量已经写在 `wrangler.jsonc`。另外两个只放在 Worker 的 secret 里：
    - `CLIENT_ID`：新 OAuth App 的 Client ID
    - `SESSION_KEY`：32 字节随机数的 base64。用 `openssl rand -base64 32` 生成，通过 `wrangler secret put` 写入，不要写进文件。
-3. 写作代理地址是 `https://jh-write-oauth.fujiahao0791.workers.dev`，已经写在 `_config.yml` 的 `writer.oauth_proxy`。不要把 Client ID、Client Secret 或会话密钥写进这个文件。
+3. 写作代理地址是 `https://jh-write-oauth.pages.dev`，已经写在 `_config.yml` 的 `writer.oauth_proxy`。原来的 Worker `https://jh-write-oauth.fujiahao0791.workers.dev` 留着，不在这里切换。不要把 Client ID、Client Secret 或会话密钥写进这个文件。
 4. 提交到 `master`，等 Pages 构建完成后，用 `fjh0805` 打开 `/write/`。
 
 登录后默认按排版写 Markdown。标题、强调、列表和链接会直接显示成版式，图片显示在正文里。需要看原文时点「源码」。代码块、表格和 HTML 仍按原文保留，不会被换成另一种格式。图片先留在本机，发布时上传到 `img/posts/<英文文件名>/`，正文里的临时引用会换成站内路径。发布失败时，已经传上去的图片会记在草稿里，再点发布会从失败的地方继续。同一份没改过的内容不会重复提交。

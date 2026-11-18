@@ -32,6 +32,7 @@ Temporary Items
 # End of https://www.gitignore.io/api/macos
 
 node_modules
+writer/oauth-proxy/pages/dist
 
 # debug file
 _site
