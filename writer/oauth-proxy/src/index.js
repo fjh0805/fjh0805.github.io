@@ -1,5 +1,5 @@
 import { openToken, sealToken } from "./session.js";
-import { listPosts, readPost, verifyPublisher, writeRepoFile } from "./github.js";
+import { listPosts, readPost, updateManaged, verifyPublisher, writeRepoFile } from "./github.js";
 
 const DEVICE_CODE_URL = "https://github.com/login/device/code";
 const ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token";
@@ -181,12 +181,12 @@ export default {
         }
 
         if (request.method !== "POST") return json(405, { error: "method_not_allowed" });
-        if (!resolveUpstream(url.pathname) && !["/session/whoami", "/repo/list", "/repo/read", "/repo/write"].includes(url.pathname)) {
+        if (!resolveUpstream(url.pathname) && !["/session/whoami", "/repo/list", "/repo/read", "/repo/write", "/repo/update"].includes(url.pathname)) {
             return json(404, { error: "not_found" });
         }
         if (!isOriginAllowed(origin, allowlist)) return json(403, { error: "origin_not_allowed" });
 
-        const limit = url.pathname === "/repo/write" ? MAX_WRITE_BYTES : MAX_SMALL_BYTES;
+        const limit = url.pathname === "/repo/write" || url.pathname === "/repo/update" ? MAX_WRITE_BYTES : MAX_SMALL_BYTES;
         const body = await readBody(request, limit);
         if (body.error) return json(413, { error: body.error }, cors);
 
@@ -224,8 +224,13 @@ export default {
                 const result = await writeRepoFile(session.auth, {
                     path: data.path,
                     message: data.message,
-                    content: data.content
+                    content: data.content,
+                    sha: data.sha
                 });
+                return json(result.status, result.body, cors);
+            }
+            if (url.pathname === "/repo/update") {
+                const result = await updateManaged(session.auth, data);
                 return json(result.status, result.body, cors);
             }
         } catch (error) {

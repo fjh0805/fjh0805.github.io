@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import worker, { isOriginAllowed, parseAllowlist, resolveUpstream } from "../writer/oauth-proxy/src/index.js";
 
@@ -260,6 +261,128 @@ test("the owner login without repository write permission gets no session", asyn
         const text = await response.text();
         assert.equal(response.status, 403);
         assert.equal(text.includes("owner-without-push"), false);
+    } finally {
+        globalThis.fetch = original;
+    }
+});
+
+test("managed edits require the owner, a matching sha, and an allowed document", async () => {
+    const original = globalThis.fetch;
+    const githubToken = "owner-token-stays-on-worker";
+    const profile = await readFile(new URL("../_data/profile.yml", import.meta.url), "utf8");
+    const postMarkdown = await readFile(new URL("../_posts/2025-03-10-逃逸分析.md", import.meta.url), "utf8");
+    const sha = "a".repeat(40);
+    const puts = [];
+    let loginName = "fjh0805";
+    globalThis.fetch = async (url, init = {}) => {
+        const href = String(url);
+        if (href === TOKEN) return jsonResponse({ access_token: githubToken });
+        if (href === USER) return jsonResponse({ login: loginName });
+        if (href === REPO) return jsonResponse({ permissions: { push: true } });
+        if (href.startsWith(`${REPO}/contents/`) && init.method === "PUT") {
+            puts.push({ url: href, body: JSON.parse(init.body) });
+            return jsonResponse({
+                content: { sha: "b".repeat(40) },
+                commit: { html_url: "https://github.com/fjh0805/fjh0805.github.io/commit/def" }
+            });
+        }
+        if (href.startsWith(`${REPO}/contents/_data/profile.yml`)) {
+            return jsonResponse({ type: "file", sha, content: Buffer.from(profile).toString("base64") });
+        }
+        if (href.startsWith(`${REPO}/contents/_posts/`)) {
+            return jsonResponse({ type: "file", sha, content: Buffer.from(postMarkdown).toString("base64") });
+        }
+        if (href.startsWith(`${REPO}/contents/`)) return new Response("missing", { status: 404 });
+        throw new Error(href);
+    };
+    try {
+        const settings = proxyEnv();
+        const anonymous = await worker.fetch(post("/repo/update", {
+            kind: "profile",
+            path: "_data/profile.yml",
+            sha,
+            profile: { name: "nope" }
+        }), settings);
+        assert.equal(anonymous.status, 401);
+        assert.equal(puts.length, 0);
+
+        const login = await worker.fetch(post("/login/oauth/access_token", { device_code: "e".repeat(40) }), settings);
+        const session = (await login.json()).session;
+        loginName = "someone";
+        const stranger = await worker.fetch(post("/repo/read", { session, path: "_data/profile.yml" }), settings);
+        assert.equal(stranger.status, 403);
+        assert.equal(puts.length, 0);
+        loginName = "fjh0805";
+
+        const escaped = await worker.fetch(post("/repo/update", {
+            session,
+            kind: "profile",
+            path: "_data/../_config.yml",
+            sha,
+            profile: { name: "JH" }
+        }), settings);
+        assert.equal(escaped.status, 400);
+
+        const rawConfig = await worker.fetch(post("/repo/write", {
+            session,
+            path: "_config.yml",
+            message: "不要改配置",
+            content: Buffer.from("writer: {}\n").toString("base64")
+        }), settings);
+        assert.equal(rawConfig.status, 400);
+
+        const rawPost = await worker.fetch(post("/repo/write", {
+            session,
+            path: "_posts/2025-03-10-逃逸分析.md",
+            message: "不要整文件覆盖",
+            content: Buffer.from("---\ntitle: x\n---\n\n正文\n").toString("base64")
+        }), settings);
+        assert.equal(rawPost.status, 400);
+        assert.equal((await rawPost.json()).error, "use_update");
+
+        const conflict = await worker.fetch(post("/repo/update", {
+            session,
+            kind: "post",
+            path: "_posts/2025-03-10-逃逸分析.md",
+            sha: "c".repeat(40),
+            title: "新标题",
+            date: "2025-03-10",
+            tags: ["Golang"],
+            body: "新正文"
+        }), settings);
+        assert.equal(conflict.status, 409);
+        assert.equal(puts.length, 0);
+
+        const saved = await worker.fetch(post("/repo/update", {
+            session,
+            kind: "post",
+            path: "_posts/2025-03-10-逃逸分析.md",
+            sha,
+            title: "新标题",
+            subtitle: "仍然保留未知字段",
+            date: "2025-03-10",
+            tags: ["Golang"],
+            body: "新正文\n\n```go\nfunc main() {}\n```"
+        }), settings);
+        assert.equal(saved.status, 200);
+        assert.equal(puts.length, 1);
+        assert.equal(puts[0].body.sha, sha);
+        assert.equal(puts[0].body.branch, "master");
+        const written = Buffer.from(puts[0].body.content, "base64").toString("utf8");
+        assert.match(written, /header-img: img\/post-bg-o\.jpg/);
+        assert.match(written, /catalog: true/);
+        assert.match(written, /title: "新标题"/);
+        assert.match(written, /func main/);
+        assert.equal(JSON.stringify(puts[0]).includes(githubToken), false);
+
+        const badLink = await worker.fetch(post("/repo/update", {
+            session,
+            kind: "links",
+            path: "_data/links.yml",
+            links: [{ title: "坏", href: "javascript:alert(1)" }]
+        }), settings);
+        assert.equal(badLink.status, 400);
+        assert.equal(puts.length, 1);
     } finally {
         globalThis.fetch = original;
     }

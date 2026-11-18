@@ -19,6 +19,10 @@ description: "JH 的技术笔记。就读于深圳大学计算机与软件学院
                 <li><a href="{{ profile.github }}" rel="me noopener noreferrer">GitHub</a></li>
                 <li><a href="mailto:{{ profile.email }}">邮件</a></li>
             </ul>
+            <p class="manage-edit" hidden data-manage-edit>
+                <a href="{{ '/write/' | relative_url }}?edit=profile">修改简介</a>
+                <a href="{{ '/write/' | relative_url }}?edit=links">修改链接</a>
+            </p>
         </div>
     </section>
 
@@ -46,11 +50,15 @@ description: "JH 的技术笔记。就读于深圳大学计算机与软件学院
         {% endif %}
     </section>
 
-    {% if site.friends %}
+    {% assign home_links = site.data.links %}
+    {% unless home_links and home_links.size > 0 %}
+    {% assign home_links = site.friends %}
+    {% endunless %}
+    {% if home_links %}
     <section class="links-section" aria-labelledby="links-title">
         <h2 id="links-title">链接</h2>
         <ul class="inline-links">
-            {% for friend in site.friends %}
+            {% for friend in home_links %}
             <li><a href="{{ friend.href }}" rel="noopener noreferrer">{{ friend.title }}</a></li>
             {% endfor %}
         </ul>

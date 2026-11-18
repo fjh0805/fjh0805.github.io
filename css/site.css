@@ -204,6 +204,20 @@ h1,
     list-style: none;
 }
 
+.manage-edit {
+    margin: 0.85rem 0 0;
+    font-size: 0.92rem;
+}
+
+.manage-edit a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.manage-edit a + a {
+    margin-left: 1rem;
+}
+
 .notes-section,
 .links-section,
 .tag-group {
