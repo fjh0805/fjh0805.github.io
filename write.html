@@ -72,7 +72,13 @@ permalink: /write/
         </form>
         <section id="profile-panel" class="doc-panel" hidden>
             <h2>简介</h2>
-            <p class="help">首页和关于页共用这份简介。照片、导航和站点设置不能在这里改。</p>
+            <p class="help">首页和关于页共用这份简介。导航和站点设置不能在这里改。</p>
+            <figure class="portrait">
+                <img id="portrait-preview" alt="个人照片预览">
+            </figure>
+            <label class="tool" for="portrait-input">更换照片</label>
+            <input id="portrait-input" class="file-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp">
+            <p class="help">可以选电脑上的图片，手机上会打开相册。先看预览，保存简介后才上传。新照片另存，原来的文件不会被盖掉。</p>
             <label class="field">名字<input id="profile-name" autocomplete="name"></label>
             <label class="field">学校<input id="profile-school" autocomplete="organization"></label>
             <label class="field">首页短句<input id="profile-quote" autocomplete="off"></label>

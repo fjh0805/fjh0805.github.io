@@ -388,6 +388,80 @@ test("managed edits require the owner, a matching sha, and an allowed document",
     }
 });
 
+test("a portrait upload must be a new bitmap and cannot replace the current photo", async () => {
+    const original = globalThis.fetch;
+    const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0, 0, 0, 0, 0]);
+    const svg = new TextEncoder().encode("<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>");
+    const puts = [];
+    globalThis.fetch = async (url, init = {}) => {
+        const href = String(url);
+        if (href === TOKEN) return jsonResponse({ access_token: "owner-token-stays-on-worker" });
+        if (href === USER) return jsonResponse({ login: "fjh0805" });
+        if (href === REPO) return jsonResponse({ permissions: { push: true } });
+        if (href.includes("/contents/img/portrait/alreadythere.png") && init.method !== "PUT") {
+            return jsonResponse({ type: "file", sha: "a".repeat(40), content: "YQ==" });
+        }
+        if (href.startsWith(`${REPO}/contents/`) && init.method === "PUT") {
+            puts.push(href);
+            return jsonResponse({ commit: { html_url: "https://github.com/fjh0805/fjh0805.github.io/commit/abc" } });
+        }
+        if (href.startsWith(`${REPO}/contents/`)) return new Response("missing", { status: 404 });
+        throw new Error(href);
+    };
+    try {
+        const settings = proxyEnv();
+        const denied = await worker.fetch(post("/repo/write", {
+            path: "img/portrait/abc123def456.png",
+            message: "更换个人照片",
+            content: Buffer.from(png).toString("base64")
+        }), settings);
+        assert.equal(denied.status, 401);
+        assert.equal(puts.length, 0);
+        const login = await worker.fetch(post("/login/oauth/access_token", { device_code: "f".repeat(40) }), settings);
+        const session = (await login.json()).session;
+        const escaped = await worker.fetch(post("/repo/write", {
+            session,
+            path: "img/my-photo.jpg",
+            message: "不要覆盖原图",
+            content: Buffer.from(png).toString("base64")
+        }), settings);
+        assert.equal(escaped.status, 400);
+        const traversal = await worker.fetch(post("/repo/write", {
+            session,
+            path: "img/portrait/../../my-photo.jpg",
+            message: "不要穿越",
+            content: Buffer.from(png).toString("base64")
+        }), settings);
+        assert.equal(traversal.status, 400);
+        const fake = await worker.fetch(post("/repo/write", {
+            session,
+            path: "img/portrait/abc123def456.png",
+            message: "更换个人照片",
+            content: Buffer.from(svg).toString("base64")
+        }), settings);
+        assert.equal(fake.status, 400);
+        assert.equal((await fake.json()).error, "bad_image");
+        const created = await worker.fetch(post("/repo/write", {
+            session,
+            path: "img/portrait/abc123def456.png",
+            message: "更换个人照片",
+            content: Buffer.from(png).toString("base64")
+        }), settings);
+        assert.equal(created.status, 200);
+        assert.equal(puts.length, 1);
+        const overwrite = await worker.fetch(post("/repo/write", {
+            session,
+            path: "img/portrait/alreadythere.png",
+            message: "不要覆盖",
+            content: Buffer.from(png).toString("base64")
+        }), settings);
+        assert.equal(overwrite.status, 409);
+        assert.equal(puts.length, 1);
+    } finally {
+        globalThis.fetch = original;
+    }
+});
+
 test("an unconfigured proxy does not call GitHub", async () => {
     const original = globalThis.fetch;
     let called = false;

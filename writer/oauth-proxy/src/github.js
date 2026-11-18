@@ -7,7 +7,7 @@ import {
     parseProfile,
     PROFILE_PATH
 } from "../../../js/content-docs.js";
-import { hasRepoWritePermission, isExistingPostPath, isNewPostPath, isPublishablePath } from "../../../js/write-policy.js";
+import { hasRepoWritePermission, imageMagicMatches, isExistingPostPath, isNewPostPath, isPortraitPath, isPublishablePath } from "../../../js/write-policy.js";
 
 const API = "https://api.github.com";
 const API_VERSION = "2022-11-28";
@@ -127,6 +127,11 @@ export async function writeRepoFile(auth, { path, message, content, sha }, fetch
     }
     const expectedSha = String(sha || "");
     if (expectedSha && !/^[a-f0-9]{40}$/.test(expectedSha)) return { status: 400, body: { error: "bad_sha" } };
+    if (isPortraitPath(path)) {
+        const bytes = Uint8Array.from(atob(encoded), (char) => char.charCodeAt(0));
+        const extension = path.slice(path.lastIndexOf(".") + 1);
+        if (!imageMagicMatches(bytes, extension)) return { status: 400, body: { error: "bad_image" } };
+    }
     const url = contentsUrl(auth.owner, auth.repo, path);
     for (let attempt = 0; attempt < 2; attempt += 1) {
         const existing = await fetchImpl(`${url}?ref=${encodeURIComponent(auth.branch)}`, { headers: auth.headers });
@@ -134,6 +139,7 @@ export async function writeRepoFile(auth, { path, message, content, sha }, fetch
         if (existing.status === 200) {
             const data = await existing.json();
             if (data.type && data.type !== "file") return { status: 409, body: { error: "not_a_file" } };
+            if (isPortraitPath(path)) return { status: 409, body: { error: "conflict" } };
             if (isExistingPostPath(path)) return { status: 400, body: { error: "use_update" } };
             currentSha = data.sha || "";
             if (!expectedSha || expectedSha !== currentSha) return { status: 409, body: { error: "conflict" } };

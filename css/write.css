@@ -512,6 +512,15 @@ button:disabled,
     flex: 0 0 auto;
 }
 
+.doc-panel .portrait {
+    margin: 0.2rem 0 0.8rem;
+}
+
+.doc-panel .tool {
+    display: inline-flex;
+    margin-bottom: 0.35rem;
+}
+
 .doc-panel h2,
 .doc-panel h3 {
     margin: 0.4rem 0 0.6rem;

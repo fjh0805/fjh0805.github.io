@@ -130,6 +130,30 @@ export function normalizeProfilePatch(patch) {
     return next;
 }
 
+export function normalizePortrait(input) {
+    if (!input || typeof input !== "object" || Array.isArray(input)) fail("bad_portrait");
+    const path = String(input.path || "");
+    if (!/^\/img\/portrait\/[a-z0-9]{12,32}\.(png|jpe?g|gif|webp)$/.test(path) || path.includes("..")) fail("bad_portrait");
+    const width = Number(input.width);
+    const height = Number(input.height);
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width < 32 || height < 32 || width > 12000 || height > 12000) {
+        fail("bad_portrait");
+    }
+    return { path, width, height };
+}
+
+export function parsePortrait(text) {
+    const portrait = { path: "", width: 0, height: 0, alt: "" };
+    splitTopLevel(text).forEach((block) => {
+        const value = unquote(block.lines[0].slice(block.lines[0].indexOf(":") + 1));
+        if (block.key === "portrait") portrait.path = value;
+        if (block.key === "portrait_width") portrait.width = Number(value) || 0;
+        if (block.key === "portrait_height") portrait.height = Number(value) || 0;
+        if (block.key === "portrait_alt") portrait.alt = value;
+    });
+    return portrait;
+}
+
 function splitTopLevel(text) {
     const blocks = [];
     let current = null;
@@ -157,6 +181,9 @@ function localeLines(name, locale) {
 
 export function applyProfileEdit(original, patch) {
     const next = normalizeProfilePatch(patch);
+    const portrait = patch && patch.portrait && typeof patch.portrait === "object" && !Array.isArray(patch.portrait)
+        ? normalizePortrait(patch.portrait)
+        : null;
     const rendered = {
         name: [`name: ${quote(next.name)}`],
         school: [`school: ${quote(next.school)}`],
@@ -166,6 +193,11 @@ export function applyProfileEdit(original, patch) {
         zh: localeLines("zh", next.zh),
         en: localeLines("en", next.en)
     };
+    if (portrait) {
+        rendered.portrait = [`portrait: ${quote(portrait.path)}`];
+        rendered.portrait_width = [`portrait_width: ${portrait.width}`];
+        rendered.portrait_height = [`portrait_height: ${portrait.height}`];
+    }
     const seen = new Set();
     const lines = [];
     splitTopLevel(original).forEach((block) => {
@@ -241,6 +273,7 @@ export function parseProfile(text) {
         }
         if (block.key === "zh" || block.key === "en") document[block.key] = parseLocale(block.lines.slice(1));
     });
+    document.portrait = parsePortrait(text);
     return document;
 }
 

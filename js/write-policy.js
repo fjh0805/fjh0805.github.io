@@ -1,6 +1,7 @@
 const NEW_POST = /^_posts\/\d{4}-\d{2}-\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*\.md$/;
 const EXISTING_POST = /^_posts\/[^/\\?#%]+\.md$/;
 const IMAGE = /^img\/posts\/[a-z0-9]+(?:-[a-z0-9]+)*\/[a-z0-9][a-z0-9.-]*\.(png|jpe?g|gif|webp)$/;
+const PORTRAIT = /^img\/portrait\/[a-z0-9]{12,32}\.(png|jpe?g|gif|webp)$/;
 
 export function isExistingPostPath(path) {
     return typeof path === "string" && EXISTING_POST.test(path) && !path.includes("..");
@@ -10,9 +11,30 @@ export function isNewPostPath(path) {
     return typeof path === "string" && NEW_POST.test(path) && !path.includes("..");
 }
 
+export function isPortraitPath(path) {
+    return typeof path === "string" && PORTRAIT.test(path) && !path.includes("..");
+}
+
 export function isPublishablePath(path) {
     if (typeof path !== "string" || path.includes("..") || path.startsWith("/") || path.includes("\\")) return false;
-    return NEW_POST.test(path) || isExistingPostPath(path) || IMAGE.test(path);
+    return NEW_POST.test(path) || isExistingPostPath(path) || IMAGE.test(path) || isPortraitPath(path);
+}
+
+export function imageMagicMatches(bytes, extension) {
+    const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
+    if (view.length < 12 || view.length > 8 * 1024 * 1024) return false;
+    const textAt = (start, text) => {
+        if (start + text.length > view.length) return false;
+        for (let index = 0; index < text.length; index += 1) {
+            if (view[start + index] !== text.charCodeAt(index)) return false;
+        }
+        return true;
+    };
+    if (extension === "png") return view[0] === 0x89 && view[1] === 0x50 && view[2] === 0x4e && view[3] === 0x47;
+    if (extension === "jpg" || extension === "jpeg") return view[0] === 0xff && view[1] === 0xd8 && view[2] === 0xff;
+    if (extension === "gif") return textAt(0, "GIF87a") || textAt(0, "GIF89a");
+    if (extension === "webp") return textAt(0, "RIFF") && textAt(8, "WEBP");
+    return false;
 }
 
 export function assertOwner(login, owner) {
