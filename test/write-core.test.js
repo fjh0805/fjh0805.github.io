@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
     assertOwner,
@@ -18,7 +19,9 @@ import {
     publishFingerprint,
     publishingConfigured,
     safeCommitUrl,
+    openVerificationTab,
     safeVerificationUri,
+    GITHUB_DEVICE_URL,
     writerGateMessage,
     renderMarkdown,
     replaceDraftImages,
@@ -145,8 +148,21 @@ test("image paste, upload resume, and duplicate publish are explicit", () => {
     const edited = publishFingerprint({ title: "笔记", body: "改过", existingPath: "" });
     assert.equal(first, same);
     assert.notEqual(first, edited);
-    assert.equal(safeVerificationUri("https://evil.example/login/device"), "https://github.com/login/device");
-    assert.equal(safeVerificationUri("https://github.com/login/device"), "https://github.com/login/device");
+    assert.equal(safeVerificationUri("https://evil.example/login/device"), GITHUB_DEVICE_URL);
+    assert.equal(safeVerificationUri("https://github.com/login/device"), GITHUB_DEVICE_URL);
+    assert.equal(safeVerificationUri("https://github.com/login/device?user_code=WDJB-MJHT"), GITHUB_DEVICE_URL);
+    assert.equal(safeVerificationUri("https://github.com/login/oauth?device_code=secret"), GITHUB_DEVICE_URL);
+    const calls = [];
+    const fake = { closed: false, opener: { secret: true } };
+    const opened = openVerificationTab((url, target) => {
+        calls.push({ url, target });
+        return fake;
+    });
+    assert.deepEqual(calls, [{ url: GITHUB_DEVICE_URL, target: "_blank" }]);
+    assert.equal(opened.blocked, false);
+    assert.equal(fake.opener, null);
+    assert.equal(openVerificationTab(() => null).blocked, true);
+    assert.equal(openVerificationTab(() => { throw new Error("blocked"); }).blocked, true);
     assert.equal(safeCommitUrl("https://github.com/fjh0805/fjh0805.github.io/commit/abc"), "https://github.com/fjh0805/fjh0805.github.io/commit/abc");
     assert.equal(safeCommitUrl("https://example.com/commit/abc"), "");
 });
@@ -188,4 +204,18 @@ test("utf-8 base64 round trip", () => {
 
 test("escape helper is stable", () => {
     assert.equal(escapeHtml(`<>"'&`), "&lt;&gt;&quot;&#39;&amp;");
+});
+
+test("login opens github in a new tab and keeps the writer page", async () => {
+    const page = await readFile(new URL("../write.html", import.meta.url), "utf8");
+    assert.match(page, /id="verify-link"[^>]*target="_blank"/);
+    assert.match(page, /rel="noopener noreferrer"/);
+    const source = await readFile(new URL("../js/write.js", import.meta.url), "utf8");
+    assert.match(source, /const tab = openVerificationTab\(\);\s*startLogin\(tab\)/);
+    const start = source.indexOf("async function startLogin");
+    const opened = source.indexOf("replaceAuthWindow", start);
+    const fetch = source.indexOf("await proxy(\"/login/device/code\"", start);
+    assert.equal(opened > start && opened < fetch, true);
+    assert.equal(source.includes("location.href"), false);
+    assert.equal(source.includes("location.assign"), false);
 });
