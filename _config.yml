@@ -64,4 +64,4 @@ writer:
   owner: fjh0805
   repo: fjh0805.github.io
   branch: master
-  oauth_proxy: "https://jh-write-oauth.fujiahao0791.workers.dev"
+  oauth_proxy: "https://jh-write-oauth.pages.dev"
