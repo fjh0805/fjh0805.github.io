@@ -35,6 +35,23 @@ test("profile edits keep the portrait and unknown fields", async () => {
     assert.equal(parseProfile(next).en.stack[0].value, "Golang, Java, Python");
     assert.throws(() => applyProfileEdit(original, { ...parsed, name: "JH\nwriter: evil" }));
     assert.throws(() => applyProfileEdit(original, { ...parsed, github: "javascript:alert(1)" }));
+    const replaced = applyProfileEdit(original, {
+        ...parsed,
+        portrait: { path: "/img/portrait/abc123def456.png", width: 1200, height: 1600 }
+    });
+    assert.match(replaced, /^portrait: "\/img\/portrait\/abc123def456.png"$/m);
+    assert.match(replaced, /^portrait_width: 1200$/m);
+    assert.match(replaced, /^portrait_height: 1600$/m);
+    assert.match(replaced, /^portrait_alt: JH 的照片$/m);
+    assert.doesNotMatch(replaced, /my-photo\.jpg/);
+    assert.throws(() => applyProfileEdit(original, {
+        ...parsed,
+        portrait: { path: "/img/my-photo.jpg", width: 100, height: 100 }
+    }));
+    assert.throws(() => applyProfileEdit(original, {
+        ...parsed,
+        portrait: { path: "/img/portrait/../../my-photo.jpg", width: 100, height: 100 }
+    }));
 });
 
 test("homepage links reject unsafe urls", async () => {

@@ -3,7 +3,9 @@ import {
     buildPostDocument,
     defaultPostSlug,
     extensionForImage,
+    imageMagicMatches,
     imagePath,
+    isPortraitPath,
     imagesStillToUpload,
     parsePostDocument,
     parseTagInput,
@@ -39,6 +41,8 @@ const state = {
     linksSha: "",
     editorMode: "post",
     authWindow: null,
+    pendingPortrait: null,
+    savedPortrait: "",
     images: [],
     remoteUrls: {},
     lastFingerprint: ""
@@ -421,6 +425,7 @@ function failureMessage(data, fallback) {
     if (data?.error === "conflict") return "内容刚被改过，请重新打开后再保存";
     if (data?.error === "use_update") return "已有文章要在这里保存";
     if (data?.error === "bad_document" || data?.error === "bad_link" || data?.error === "bad_text") return "有些内容还不能保存";
+    if (data?.error === "bad_image" || data?.error === "bad_portrait") return "这张照片不能用";
     return fallback;
 }
 
@@ -783,6 +788,51 @@ function renderLinksPreview() {
     return links;
 }
 
+function displayPortrait(path) {
+    return typeof path === "string" && /^\/img\/[A-Za-z0-9./_-]+\.(png|jpe?g|gif|webp)$/.test(path) && !path.includes("..")
+        ? path
+        : "";
+}
+
+function bytesToBase64(bytes) {
+    let binary = "";
+    const chunk = 0x8000;
+    for (let index = 0; index < bytes.length; index += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(index, index + chunk));
+    }
+    return btoa(binary);
+}
+
+function clearPendingPortrait() {
+    if (state.pendingPortrait?.previewUrl) URL.revokeObjectURL(state.pendingPortrait.previewUrl);
+    state.pendingPortrait = null;
+}
+
+async function stagePortrait(file) {
+    if (!file || file.size > 8 * 1024 * 1024) throw new Error("照片太大");
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const ext = extensionForImage(file.type);
+    if (!ext || !imageMagicMatches(bytes, ext)) throw new Error("请换 JPG、PNG、GIF 或 WebP");
+    const previewUrl = URL.createObjectURL(new Blob([bytes], { type: file.type }));
+    const size = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+        image.onerror = () => reject(new Error("这张照片打不开"));
+        image.src = previewUrl;
+    });
+    if (size.width < 32 || size.height < 32 || size.width > 12000 || size.height > 12000) {
+        URL.revokeObjectURL(previewUrl);
+        throw new Error("照片尺寸不合适");
+    }
+    clearPendingPortrait();
+    state.pendingPortrait = { bytes, ext, previewUrl, width: size.width, height: size.height };
+    const preview = document.querySelector("#portrait-preview");
+    preview.src = previewUrl;
+    preview.width = size.width;
+    preview.height = size.height;
+    setStatus("这是本地预览。保存简介后才会上传，原来的照片文件还在。");
+}
+
 async function openProfile() {
     const session = await verifyWriter(readSession());
     const result = await proxy("/repo/read", { session: session.session, path: PROFILE_PATH });
@@ -797,6 +847,14 @@ async function openProfile() {
     document.querySelector("#profile-github").value = profile.github || "";
     fillLocale("zh", profile.zh);
     fillLocale("en", profile.en);
+    clearPendingPortrait();
+    const current = displayPortrait(profile.portrait?.path);
+    state.savedPortrait = current;
+    const preview = document.querySelector("#portrait-preview");
+    preview.src = current;
+    if (profile.portrait?.alt) preview.alt = profile.portrait.alt;
+    if (profile.portrait?.width) preview.width = profile.portrait.width;
+    if (profile.portrait?.height) preview.height = profile.portrait.height;
     state.profileSha = result.data.sha;
     showPanel("profile");
     renderProfilePreview();
@@ -822,6 +880,25 @@ async function saveProfile() {
     button.disabled = true;
     try {
         const session = await verifyWriter(readSession());
+        let uploaded = "";
+        if (state.pendingPortrait) {
+            const id = crypto.randomUUID().replace(/-/g, "").slice(0, 20);
+            const repoPath = `img/portrait/${id}.${state.pendingPortrait.ext}`;
+            if (!isPortraitPath(repoPath)) throw new Error("照片路径不合法");
+            setStatus("正在上传照片");
+            try {
+                await putFile(session.session, repoPath, bytesToBase64(state.pendingPortrait.bytes), "更换个人照片");
+            } catch (error) {
+                throw new Error(`${error.message || "照片没有上传"} 原来的照片还在。`);
+            }
+            uploaded = `/${repoPath}`;
+            profile.portrait = {
+                path: uploaded,
+                width: state.pendingPortrait.width,
+                height: state.pendingPortrait.height
+            };
+        }
+        setStatus("正在保存简介");
         const result = await proxy("/repo/update", {
             session: session.session,
             kind: "profile",
@@ -829,8 +906,13 @@ async function saveProfile() {
             sha: state.profileSha,
             profile
         });
-        if (!result.ok) throw new Error(failureMessage(result.data, "简介没有保存"));
+        if (!result.ok) {
+            const message = failureMessage(result.data, "简介没有保存");
+            throw new Error(uploaded ? `${message} 新照片没有用上，原来的照片还在。` : message);
+        }
         state.profileSha = result.data.sha || "";
+        if (uploaded) state.savedPortrait = uploaded;
+        clearPendingPortrait();
         setStatus("简介已保存。页面更新还要等一会儿。");
     } finally {
         button.disabled = false;
@@ -1012,6 +1094,12 @@ document.querySelector("#save-links").addEventListener("click", () => {
     saveLinks().catch((error) => setStatus(error.message || "链接没有保存"));
 });
 document.querySelector("#profile-panel").addEventListener("input", () => renderProfilePreview());
+document.querySelector("#portrait-input").addEventListener("change", (event) => {
+    const file = event.target.files && event.target.files[0];
+    event.target.value = "";
+    if (!file) return;
+    stagePortrait(file).catch((error) => setStatus(error.message || "照片没有读到"));
+});
 document.querySelector("#home-links").addEventListener("input", () => renderLinksPreview());
 document.querySelector("#preview-toggle").addEventListener("click", () => setSourceMode(!state.sourceMode));
 document.querySelector("#download").addEventListener("click", () => {
