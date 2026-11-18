@@ -28,6 +28,12 @@ permalink: /write/
     </div>
 
     <div id="studio" hidden>
+        <nav class="shelf" aria-label="可编辑内容">
+            <button type="button" id="open-new">新笔记</button>
+            <button type="button" id="open-profile">简介</button>
+            <button type="button" id="open-links">主页链接</button>
+        </nav>
+        <ul id="post-shelf" class="post-shelf"></ul>
         <form id="editor" class="manuscript">
             <input id="post-title" class="title-field" name="title" autocomplete="off" placeholder="标题" aria-label="标题" required>
             <details class="settings" id="post-settings">
@@ -64,6 +70,42 @@ permalink: /write/
                 <div id="writer-surface"></div>
             </div>
         </form>
+        <section id="profile-panel" class="doc-panel" hidden>
+            <h2>简介</h2>
+            <p class="help">首页和关于页共用这份简介。照片、导航和站点设置不能在这里改。</p>
+            <label class="field">名字<input id="profile-name" autocomplete="name"></label>
+            <label class="field">学校<input id="profile-school" autocomplete="organization"></label>
+            <label class="field">首页短句<input id="profile-quote" autocomplete="off"></label>
+            <label class="field">邮箱<input id="profile-email" autocomplete="email" inputmode="email"></label>
+            <label class="field">GitHub<input id="profile-github" autocomplete="url" inputmode="url"></label>
+            <h3>中文</h3>
+            <label class="field">导语<textarea id="profile-zh-lead" rows="3"></textarea></label>
+            <label class="field">段落<textarea id="profile-zh-paragraphs" rows="5"></textarea></label>
+            <p class="help">一段一行。</p>
+            <label class="field">关于页引文<input id="profile-zh-quote" autocomplete="off"></label>
+            <label class="field">关于页句子<input id="profile-zh-motto" autocomplete="off"></label>
+            <label class="field">链接<textarea id="profile-zh-links" rows="4"></textarea></label>
+            <label class="field">技术栈<textarea id="profile-zh-stack" rows="4"></textarea></label>
+            <p class="help">每行写成「标题 | 地址」或「名称 | 内容」。只接受 https 和邮箱链接。</p>
+            <details class="settings">
+                <summary><span>英文</span></summary>
+                <label class="field">Lead<textarea id="profile-en-lead" rows="3"></textarea></label>
+                <label class="field">Paragraphs<textarea id="profile-en-paragraphs" rows="5"></textarea></label>
+                <label class="field">Quote<input id="profile-en-quote" autocomplete="off"></label>
+                <label class="field">Motto<input id="profile-en-motto" autocomplete="off"></label>
+                <label class="field">Links<textarea id="profile-en-links" rows="4"></textarea></label>
+                <label class="field">Stack<textarea id="profile-en-stack" rows="4"></textarea></label>
+            </details>
+            <div id="profile-preview" class="doc-preview"></div>
+            <button type="button" id="save-profile" class="primary">保存简介</button>
+        </section>
+        <section id="links-panel" class="doc-panel" hidden>
+            <h2>主页链接</h2>
+            <p class="help">只改首页底部的链接。一行一个，写成「标题 | 地址」。</p>
+            <label class="field">链接<textarea id="home-links" rows="6"></textarea></label>
+            <div id="links-preview" class="doc-preview"></div>
+            <button type="button" id="save-links" class="primary">保存链接</button>
+        </section>
         <div class="composer">
             <div id="status-dock"></div>
             <ul id="image-list" class="image-list"></ul>

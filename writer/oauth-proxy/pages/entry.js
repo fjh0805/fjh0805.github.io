@@ -6,7 +6,8 @@ const POST_ROUTES = new Set([
     "/session/whoami",
     "/repo/list",
     "/repo/read",
-    "/repo/write"
+    "/repo/write",
+    "/repo/update"
 ]);
 
 export function pagesHandles(request) {

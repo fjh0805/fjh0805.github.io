@@ -15,8 +15,10 @@ import {
     slugify,
     splitPostPath,
     utf8ToBase64,
-    writerGateMessage
+    writerGateMessage,
+    isExistingPostPath
 } from "./write-core.js";
+import { LINKS_PATH, normalizeLinks, normalizeProfilePatch, PROFILE_PATH } from "./content-docs.js";
 import { createWriterEditor } from "./write-editor.js";
 
 const SESSION_KEY = "jh-write-session";
@@ -30,6 +32,10 @@ const state = {
     loginAttempt: 0,
     draftId: crypto.randomUUID(),
     existingPath: "",
+    baseSha: "",
+    profileSha: "",
+    linksSha: "",
+    editorMode: "post",
     images: [],
     remoteUrls: {},
     lastFingerprint: ""
@@ -132,8 +138,11 @@ function updateSlugHint() {
     const date = document.querySelector("#post-date").value;
     const tags = parseTagInput(document.querySelector("#post-tags").value);
     if (summary) summary.textContent = [date, tags.join("、")].filter(Boolean).join(" · ");
+    const slugInput = document.querySelector("#post-slug");
+    if (slugInput) slugInput.readOnly = Boolean(state.existingPath);
+    if (publishButton && !state.publishing) publishButton.textContent = state.existingPath ? "保存" : "发布";
     if (state.existingPath) {
-        hint.textContent = "将覆盖原来的文章，网址不变。";
+        hint.textContent = "保存后仍用原来的文件和网址。先看正文里的排版，再点保存。";
         return;
     }
     const slug = slugify(document.querySelector("#post-slug").value);
@@ -215,6 +224,8 @@ function loadDraft(draft) {
     revokePreviews();
     state.draftId = draft.id;
     state.existingPath = draft.existingPath || "";
+    state.baseSha = "";
+    showPanel("post");
     state.images = (draft.images || []).map((image) => ({
         id: image.id,
         filename: image.filename,
@@ -256,10 +267,12 @@ function resetEditor() {
     revokePreviews();
     state.draftId = crypto.randomUUID();
     state.existingPath = "";
+    state.baseSha = "";
     state.images = [];
     state.remoteUrls = {};
     state.lastFingerprint = "";
     state.slugEdited = false;
+    showPanel("post");
     fill({ date: new Date().toISOString().slice(0, 10) });
     renderImages();
     setSourceMode(false);
@@ -402,7 +415,9 @@ function failureMessage(data, fallback) {
     if (data?.error === "not_authorized" || data?.error === "forbidden") return "这个 GitHub 账号不能发布";
     if (data?.error === "unauthorized") return "登录已失效，请重新登录";
     if (data?.error === "proxy_not_configured") return "写作代理还没准备好。";
-    if (data?.error === "conflict") return "文件刚被更新过，请再发布一次";
+    if (data?.error === "conflict") return "内容刚被改过，请重新打开后再保存";
+    if (data?.error === "use_update") return "已有文章要在这里保存";
+    if (data?.error === "bad_document" || data?.error === "bad_link" || data?.error === "bad_text") return "有些内容还不能保存";
     return fallback;
 }
 
@@ -478,28 +493,47 @@ async function publish() {
             }
             mapping[image.id] = image.remotePath;
         }
-        setStatus("正在发布");
+        setStatus(state.existingPath ? "正在保存" : "正在发布");
+        const updating = Boolean(state.existingPath);
         const body = replaceDraftImages(current.body, mapping);
-        const doc = buildPostDocument({
-            ...current,
-            body,
-            author: "JH",
-            existingPath: state.existingPath || undefined
-        });
-        const result = await putFile(
-            session.session,
-            doc.path,
-            utf8ToBase64(doc.markdown),
-            `${state.existingPath ? "更新" : "发布"}：${current.title.trim()}`.slice(0, 180)
-        );
+        let result;
+        if (state.existingPath) {
+            if (!state.baseSha) throw new Error("请从文章列表重新打开后再保存");
+            result = await proxy("/repo/update", {
+                session: session.session,
+                kind: "post",
+                path: state.existingPath,
+                sha: state.baseSha,
+                title: current.title,
+                subtitle: current.subtitle,
+                date: current.date,
+                tags: current.tags,
+                body
+            });
+            if (!result.ok) throw new Error(failureMessage(result.data, "文章没有保存"));
+            result = result.data;
+            state.baseSha = result.sha || "";
+        } else {
+            const doc = buildPostDocument({
+                ...current,
+                body,
+                author: "JH"
+            });
+            result = await putFile(
+                session.session,
+                doc.path,
+                utf8ToBase64(doc.markdown),
+                `发布：${current.title.trim()}`.slice(0, 180)
+            );
+            state.existingPath = doc.path;
+        }
         setBodyText(body);
-        state.existingPath = doc.path;
         state.images = [];
         state.lastFingerprint = publishFingerprint({ ...fields(), existingPath: state.existingPath });
         renderImages();
         updateSlugHint();
         await saveDraft({ quiet: true, duringPublish: true });
-        setStatus("已发布。主页更新还要等一会儿。");
+        setStatus(updating ? "已保存。页面更新还要等一会儿。" : "已发布。主页更新还要等一会儿。");
         const commitUrl = safeCommitUrl(result.commitUrl);
         if (commitUrl) {
             const link = document.createElement("a");
@@ -537,18 +571,22 @@ async function loadRemoteList() {
     const result = await proxy("/repo/list", { session: session.session });
     if (!result.ok) throw new Error(failureMessage(result.data, "没有读到文章列表"));
     const list = document.querySelector("#remote-list");
-    list.replaceChildren();
-    (result.data.files || []).forEach((item) => {
-        const row = document.createElement("li");
-        const button = document.createElement("button");
-        button.type = "button";
-        button.textContent = item.name;
-        button.addEventListener("click", () => {
-            openRemote(item.path).catch((error) => setStatus(error.message || "读取失败"));
+    const fillList = (node) => {
+        node.replaceChildren();
+        (result.data.files || []).forEach((item) => {
+            const row = document.createElement("li");
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = item.name.replace(/\.md$/, "");
+            button.addEventListener("click", () => {
+                openRemote(item.path).catch((error) => setStatus(error.message || "读取失败"));
+            });
+            row.append(button);
+            node.append(row);
         });
-        row.append(button);
-        list.append(row);
-    });
+    };
+    fillList(list);
+    fillList(document.querySelector("#post-shelf"));
     if (!list.childElementCount) setStatus("还没有已发布的文章。");
 }
 
@@ -556,18 +594,21 @@ async function openRemote(path) {
     const session = await verifyWriter(readSession());
     const result = await proxy("/repo/read", { session: session.session, path });
     if (!result.ok) throw new Error(failureMessage(result.data, "没有读到这篇文章"));
+    if (!result.data.sha) throw new Error("写作代理还没更新，暂时不能保存修改");
     const parsed = parsePostDocument(result.data.content || "");
     const parts = splitPostPath(path);
     revokePreviews();
     state.draftId = crypto.randomUUID();
     state.existingPath = path;
+    state.baseSha = result.data.sha;
     state.images = [];
     state.lastFingerprint = "";
     state.slugEdited = true;
+    showPanel("post");
     fill({ ...parsed, slug: parts?.slug || "" });
     renderImages();
     setSourceMode(false);
-    setStatus("已打开线上文章。");
+    setStatus("已打开这篇文章。看完排版后再保存。");
 }
 
 function lockStudio() {
@@ -580,10 +621,15 @@ function lockStudio() {
     const studio = document.querySelector("#studio");
     studio.hidden = true;
     document.querySelector("#remote-list").replaceChildren();
+    document.querySelector("#post-shelf").replaceChildren();
     document.querySelector("#draft-list").replaceChildren();
     revokePreviews();
     state.draftId = crypto.randomUUID();
     state.existingPath = "";
+    state.baseSha = "";
+    state.profileSha = "";
+    state.linksSha = "";
+    showPanel("post");
     state.images = [];
     state.remoteUrls = {};
     state.lastFingerprint = "";
@@ -600,6 +646,190 @@ function showLoggedOut() {
     setStatus("");
 }
 
+function readRequest() {
+    const params = new URLSearchParams(window.location.search);
+    const edit = params.get("edit");
+    const post = params.get("post") || "";
+    if (edit === "profile" || edit === "links") return { edit };
+    if (isExistingPostPath(post)) return { post };
+    return {};
+}
+
+function showPanel(mode) {
+    state.editorMode = mode;
+    document.querySelector("#editor").hidden = mode !== "post";
+    document.querySelector(".composer").hidden = mode !== "post";
+    document.querySelector("#profile-panel").hidden = mode !== "profile";
+    document.querySelector("#links-panel").hidden = mode !== "links";
+}
+
+function pairLines(items, left, right) {
+    return (items || []).map((item) => `${item[left] || ""} | ${item[right] || ""}`).join("\n");
+}
+
+function parsePairLines(text, left, right) {
+    return String(text || "").split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
+        const split = line.indexOf("|");
+        if (split < 0) return { [left]: line, [right]: "" };
+        return { [left]: line.slice(0, split).trim(), [right]: line.slice(split + 1).trim() };
+    });
+}
+
+function localeFrom(prefix) {
+    return {
+        lead: document.querySelector(`#profile-${prefix}-lead`).value,
+        paragraphs: document.querySelector(`#profile-${prefix}-paragraphs`).value.split("\n").map((line) => line.trim()).filter(Boolean),
+        quote: document.querySelector(`#profile-${prefix}-quote`).value,
+        motto: document.querySelector(`#profile-${prefix}-motto`).value,
+        links: parsePairLines(document.querySelector(`#profile-${prefix}-links`).value, "title", "href"),
+        stack: parsePairLines(document.querySelector(`#profile-${prefix}-stack`).value, "label", "value")
+    };
+}
+
+function fillLocale(prefix, locale) {
+    document.querySelector(`#profile-${prefix}-lead`).value = locale?.lead || "";
+    document.querySelector(`#profile-${prefix}-paragraphs`).value = (locale?.paragraphs || []).join("\n");
+    document.querySelector(`#profile-${prefix}-quote`).value = locale?.quote || "";
+    document.querySelector(`#profile-${prefix}-motto`).value = locale?.motto || "";
+    document.querySelector(`#profile-${prefix}-links`).value = pairLines(locale?.links, "title", "href");
+    document.querySelector(`#profile-${prefix}-stack`).value = pairLines(locale?.stack, "label", "value");
+}
+
+function profileFromForm() {
+    return normalizeProfilePatch({
+        name: document.querySelector("#profile-name").value,
+        school: document.querySelector("#profile-school").value,
+        quote: document.querySelector("#profile-quote").value,
+        email: document.querySelector("#profile-email").value,
+        github: document.querySelector("#profile-github").value,
+        zh: localeFrom("zh"),
+        en: localeFrom("en")
+    });
+}
+
+function renderProfilePreview() {
+    const node = document.querySelector("#profile-preview");
+    let profile;
+    try {
+        profile = profileFromForm();
+    } catch {
+        node.textContent = "还有字段需要改成合法的文字或链接。";
+        return null;
+    }
+    node.replaceChildren();
+    const heading = document.createElement("p");
+    heading.textContent = `${profile.name} · ${profile.quote}`;
+    const lead = document.createElement("p");
+    lead.textContent = profile.zh.lead;
+    node.append(heading, lead);
+    profile.zh.paragraphs.forEach((paragraph) => {
+        const line = document.createElement("p");
+        line.textContent = paragraph;
+        node.append(line);
+    });
+    return profile;
+}
+
+function linksFromForm() {
+    return normalizeLinks(parsePairLines(document.querySelector("#home-links").value, "title", "href"));
+}
+
+function renderLinksPreview() {
+    const node = document.querySelector("#links-preview");
+    let links;
+    try {
+        links = linksFromForm();
+    } catch {
+        node.textContent = "每行需要一个标题，以及 https 或邮箱地址。";
+        return null;
+    }
+    const list = document.createElement("ul");
+    links.forEach((link) => {
+        const item = document.createElement("li");
+        item.textContent = `${link.title} · ${link.href}`;
+        list.append(item);
+    });
+    node.replaceChildren(list);
+    return links;
+}
+
+async function openProfile() {
+    const session = await verifyWriter(readSession());
+    const result = await proxy("/repo/read", { session: session.session, path: PROFILE_PATH });
+    if (!result.ok || !result.data.document || !result.data.sha) {
+        throw new Error(failureMessage(result.data, "没有读到简介"));
+    }
+    const profile = result.data.document;
+    document.querySelector("#profile-name").value = profile.name || "";
+    document.querySelector("#profile-school").value = profile.school || "";
+    document.querySelector("#profile-quote").value = profile.quote || "";
+    document.querySelector("#profile-email").value = profile.email || "";
+    document.querySelector("#profile-github").value = profile.github || "";
+    fillLocale("zh", profile.zh);
+    fillLocale("en", profile.en);
+    state.profileSha = result.data.sha;
+    showPanel("profile");
+    renderProfilePreview();
+    setStatus("先看预览，再保存简介。");
+}
+
+async function openLinks() {
+    const session = await verifyWriter(readSession());
+    const result = await proxy("/repo/read", { session: session.session, path: LINKS_PATH });
+    if (!result.ok || !result.data.sha) throw new Error(failureMessage(result.data, "没有读到主页链接"));
+    document.querySelector("#home-links").value = pairLines(result.data.links, "title", "href");
+    state.linksSha = result.data.sha;
+    showPanel("links");
+    renderLinksPreview();
+    setStatus("先看预览，再保存链接。");
+}
+
+async function saveProfile() {
+    const profile = renderProfilePreview();
+    if (!profile) return;
+    if (!state.profileSha) throw new Error("请重新打开简介再保存");
+    const button = document.querySelector("#save-profile");
+    button.disabled = true;
+    try {
+        const session = await verifyWriter(readSession());
+        const result = await proxy("/repo/update", {
+            session: session.session,
+            kind: "profile",
+            path: PROFILE_PATH,
+            sha: state.profileSha,
+            profile
+        });
+        if (!result.ok) throw new Error(failureMessage(result.data, "简介没有保存"));
+        state.profileSha = result.data.sha || "";
+        setStatus("简介已保存。页面更新还要等一会儿。");
+    } finally {
+        button.disabled = false;
+    }
+}
+
+async function saveLinks() {
+    const links = renderLinksPreview();
+    if (!links) return;
+    if (!state.linksSha) throw new Error("请重新打开链接再保存");
+    const button = document.querySelector("#save-links");
+    button.disabled = true;
+    try {
+        const session = await verifyWriter(readSession());
+        const result = await proxy("/repo/update", {
+            session: session.session,
+            kind: "links",
+            path: LINKS_PATH,
+            sha: state.linksSha,
+            links
+        });
+        if (!result.ok) throw new Error(failureMessage(result.data, "链接没有保存"));
+        state.linksSha = result.data.sha || "";
+        setStatus("链接已保存。页面更新还要等一会儿。");
+    } finally {
+        button.disabled = false;
+    }
+}
+
 async function enterStudio(session) {
     state.unlocked = true;
     document.querySelector("#studio").hidden = false;
@@ -608,8 +838,27 @@ async function enterStudio(session) {
     document.querySelector("#device").hidden = true;
     document.querySelector("#who").textContent = session.login || "";
     setWriting(true);
+    showPanel("post");
     setStatus("");
     const drafts = await renderDrafts();
+    const request = readRequest();
+    try {
+        await loadRemoteList();
+    } catch (error) {
+        setStatus(error.message || "没有读到文章列表");
+    }
+    if (request.edit === "profile") {
+        await openProfile();
+        return;
+    }
+    if (request.edit === "links") {
+        await openLinks();
+        return;
+    }
+    if (request.post) {
+        await openRemote(request.post);
+        return;
+    }
     if (drafts[0]) loadDraft(drafts[0]);
     else resetEditor();
 }
@@ -699,6 +948,25 @@ document.querySelector("#new-draft").addEventListener("click", () => {
     setSave("");
     setStatus("");
 });
+document.querySelector("#open-new").addEventListener("click", () => {
+    resetEditor();
+    setSave("");
+    setStatus("");
+});
+document.querySelector("#open-profile").addEventListener("click", () => {
+    openProfile().catch((error) => setStatus(error.message || "没有读到简介"));
+});
+document.querySelector("#open-links").addEventListener("click", () => {
+    openLinks().catch((error) => setStatus(error.message || "没有读到主页链接"));
+});
+document.querySelector("#save-profile").addEventListener("click", () => {
+    saveProfile().catch((error) => setStatus(error.message || "简介没有保存"));
+});
+document.querySelector("#save-links").addEventListener("click", () => {
+    saveLinks().catch((error) => setStatus(error.message || "链接没有保存"));
+});
+document.querySelector("#profile-panel").addEventListener("input", () => renderProfilePreview());
+document.querySelector("#home-links").addEventListener("input", () => renderLinksPreview());
 document.querySelector("#preview-toggle").addEventListener("click", () => setSourceMode(!state.sourceMode));
 document.querySelector("#download").addEventListener("click", () => {
     try {

@@ -6,6 +6,10 @@ export function isExistingPostPath(path) {
     return typeof path === "string" && EXISTING_POST.test(path) && !path.includes("..");
 }
 
+export function isNewPostPath(path) {
+    return typeof path === "string" && NEW_POST.test(path) && !path.includes("..");
+}
+
 export function isPublishablePath(path) {
     if (typeof path !== "string" || path.includes("..") || path.startsWith("/") || path.includes("\\")) return false;
     return NEW_POST.test(path) || isExistingPostPath(path) || IMAGE.test(path);

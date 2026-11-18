@@ -13,6 +13,9 @@ layout: default
             </p>
             {% endif %}
             <h1 class="article-title">{{ page.title }}</h1>
+            <p class="manage-edit" hidden data-manage-edit>
+                <a href="{{ '/write/' | relative_url }}?post={{ page.path | uri_escape }}">修改这篇文章</a>
+            </p>
             {% if page.subtitle %}
             <p class="dek">{{ page.subtitle }}</p>
             {% endif %}

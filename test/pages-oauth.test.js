@@ -18,6 +18,7 @@ test("pages defaults stay on this site and do not invent a session key", () => {
 test("pages serves api routes itself and other paths through assets", async () => {
     assert.equal(pagesHandles(new Request("https://pages.example/health")), true);
     assert.equal(pagesHandles(new Request("https://pages.example/login/device/code", { method: "POST" })), true);
+    assert.equal(pagesHandles(new Request("https://pages.example/repo/update", { method: "POST" })), true);
     assert.equal(pagesHandles(new Request("https://pages.example/")), false);
 
     let assetsCalled = false;
