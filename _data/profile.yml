@@ -1,29 +1,28 @@
-name: JH
+name: "Jamsoul"
 portrait: /img/portrait/jh20261122aaef.jpg
 portrait_width: 2316
 portrait_height: 3088
 portrait_alt: JH 的照片
-email: fujiahao0805@gmail.com
-github: https://github.com/fjh0805
-school: 深圳大学计算机与软件学院
-quote: "永远年轻，永远热泪盈眶"
+email: "fujiahao0805@gmail.com"
+github: "https://github.com/fjh0805"
+school: "深圳大学计算机与软件学院"
+quote: "希望你永远开心，这就够了"
 zh:
-  lead: "Hi，我是 JH，2001年8月5日生于江西南昌，目前就读于深圳大学计算机与软件学院。"
+  lead: "Hi，我是 JH，2001年8月5日生于江西南昌，硕士毕业于深圳大学计算机与软件学院。目前在腾讯担任推荐算法架构。"
   paragraphs:
     - "热爱编程，专注于后端开发，主要使用 Golang 进行开发。对分布式系统、Agent等领域有浓厚兴趣。"
     - "这是我的个人技术博客，用来记录学习心得、技术总结和思考感悟。希望能与更多技术同行交流学习。"
-  quote: "爱我们爱的人, 至于那些恨我们的人, 就是灰尘而已"
-  motto: "Keep coding, keep thinking, keep growing"
+  quote: "希望你的生活像诗一样"
+  motto: ""
   links:
-    - { title: GitHub, href: https://github.com/fjh0805 }
-    - { title: LeetCode, href: https://leetcode.cn/ }
-    - { title: Golang, href: https://golang.org/ }
-    - { title: 深圳大学, href: https://www.szu.edu.cn/ }
+    - { title: "GitHub", href: "https://github.com/fjh0805" }
+    - { title: "Golang", href: "https://golang.org/" }
+    - { title: "深圳大学", href: "https://www.szu.edu.cn/" }
   stack:
-    - { label: 后端开发, value: "Golang, Python" }
-    - { label: 数据库, value: "MySQL, Redis" }
-    - { label: Agent, value: "MCP, RAG" }
-    - { label: 其他技能, value: "Linux, Git" }
+    - { label: "后端开发", value: "Golang, Python" }
+    - { label: "数据库", value: "MySQL, Redis" }
+    - { label: "Agent", value: "MCP, RAG" }
+    - { label: "其他技能", value: "Linux, Git" }
 en:
   lead: "Hi, I am JH, born on August 5th, 2001 in Nanchang, Jiangxi. Currently studying at Shenzhen University, School of Computer Science and Technology."
   paragraphs:
@@ -32,12 +31,12 @@ en:
   quote: "Stay hungry, stay foolish."
   motto: "Code for the future, learn for today."
   links:
-    - { title: GitHub, href: https://github.com/fjh0805 }
-    - { title: LeetCode, href: https://leetcode.cn/ }
-    - { title: Golang, href: https://golang.org/ }
-    - { title: Shenzhen University, href: https://www.szu.edu.cn/ }
+    - { title: "GitHub", href: "https://github.com/fjh0805" }
+    - { title: "LeetCode", href: "https://leetcode.cn/" }
+    - { title: "Golang", href: "https://golang.org/" }
+    - { title: "Shenzhen University", href: "https://www.szu.edu.cn/" }
   stack:
-    - { label: Backend, value: "Golang, Java, Python" }
-    - { label: Database, value: "MySQL, Redis, MongoDB" }
-    - { label: Frameworks, value: "Gin, Spring Boot, Docker" }
-    - { label: Others, value: "Linux, Git, Microservices" }
+    - { label: "Backend", value: "Golang, Java, Python" }
+    - { label: "Database", value: "MySQL, Redis, MongoDB" }
+    - { label: "Frameworks", value: "Gin, Spring Boot, Docker" }
+    - { label: "Others", value: "Linux, Git, Microservices" }
