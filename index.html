@@ -5,10 +5,12 @@ description: "JH 的技术笔记。就读于深圳大学计算机与软件学院
 {% assign profile = site.data.profile %}
 <div class="page">
     <section class="intro">
-        {% include portrait.html %}
-        <p class="manage-edit" hidden data-manage-edit>
-            <a href="{{ '/write/' | relative_url }}?edit=profile">更换照片</a>
-        </p>
+        <div class="intro-photo">
+            {% include portrait.html %}
+            <p class="manage-edit" hidden data-manage-edit>
+                <a href="{{ '/write/' | relative_url }}?edit=profile">更换照片</a>
+            </p>
+        </div>
         <div class="intro-copy">
             <p class="eyebrow">{{ profile.school }}</p>
             <h1>{{ profile.name }}</h1>

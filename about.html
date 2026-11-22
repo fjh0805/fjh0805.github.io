@@ -24,7 +24,7 @@ permalink: /about/
 
     <div class="lang-panel" data-lang-panel="zh" lang="zh-CN">
         <blockquote>
-            <p>{{ profile.zh.quote }}<br>{{ profile.zh.motto }}</p>
+            <p>{{ profile.zh.quote }}{% if profile.zh.motto != blank %}<br>{{ profile.zh.motto }}{% endif %}</p>
         </blockquote>
         <p>{{ profile.zh.lead }}</p>
         {% for paragraph in profile.zh.paragraphs %}
@@ -54,7 +54,7 @@ permalink: /about/
 
     <div class="lang-panel" data-lang-panel="en" lang="en" hidden>
         <blockquote>
-            <p>{{ profile.en.quote }}<br>{{ profile.en.motto }}</p>
+            <p>{{ profile.en.quote }}{% if profile.en.motto != blank %}<br>{{ profile.en.motto }}{% endif %}</p>
         </blockquote>
         <p>{{ profile.en.lead }}</p>
         {% for paragraph in profile.en.paragraphs %}

@@ -134,13 +134,20 @@ a:hover {
 
 .intro {
     display: grid;
-    grid-template-columns: 12.75rem minmax(0, 1fr);
+    grid-template-columns: minmax(0, 12.75rem) minmax(0, 1fr);
     gap: 1.35rem 1.85rem;
-    align-items: center;
+    align-items: start;
+}
+
+.intro-photo,
+.intro-copy,
+.portrait {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .portrait {
-    width: 12.75rem;
+    width: min(12.75rem, 100%);
     margin: 0;
     padding: 0.55rem;
     background: var(--paper-raised);
@@ -152,8 +159,13 @@ a:hover {
 .portrait img {
     display: block;
     width: 100%;
+    max-width: 100%;
     height: auto;
     border-radius: 0.9rem;
+}
+
+.intro-copy {
+    overflow-wrap: break-word;
 }
 
 .eyebrow {
