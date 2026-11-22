@@ -25,8 +25,9 @@ test("profile edits keep the portrait and unknown fields", async () => {
         portrait: "/img/other.jpg",
         zh: { ...parsed.zh, lead: parsed.zh.lead }
     });
-    assert.match(next, /^portrait: \/img\/my-photo\.jpg$/m);
-    assert.match(next, /^portrait_width: 2166$/m);
+    assert.match(next, /^portrait: \/img\/portrait\/jh20261122aaef\.jpg$/m);
+    assert.match(next, /^portrait_width: 2316$/m);
+    assert.match(next, /^portrait_height: 3088$/m);
     assert.match(next, /^portrait_alt: JH 的照片$/m);
     assert.match(next, /^custom_note: "keep me"$/m);
     assert.match(next, /^name: "JH\\" writer: evil"$/m);
